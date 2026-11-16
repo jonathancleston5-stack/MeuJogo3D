@@ -173,6 +173,14 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool ehJogad
     rlPopMatrix();
 }
 
+bool pontoBloqueado3D(float x, float z, const std::vector<BoundingBox>& caixas) {
+    for (const auto& box : caixas) {
+        if (x >= box.min.x && x <= box.max.x && z >= box.min.z && z <= box.max.z) return true;
+    }
+    return false;
+    
+}
+
 // Shader embutido de Iluminacao Direcional + Nevoa (Fog) estilo Console
 const char* vsCodigo = R"(
 #version 100
