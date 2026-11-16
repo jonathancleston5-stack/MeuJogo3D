@@ -43,6 +43,7 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
         rlScalef(1.0f, agachado ? 0.72f : 1.0f, 1.0f);
         float balanco = (cicloPasso > 0.0f) ? std::sin(cicloPasso) * 28.0f : 0.0f;
         float resp = (cicloPasso == 0.0f) ? std::sin((float)GetTime() * 2.8f) * 0.015f : 0.0f;
+
         for (int lado = -1; lado <= 1; lado += 2) {
             rlPushMatrix();
                 rlTranslatef(0.13f * lado, 0.78f, 0.0f);
@@ -52,26 +53,38 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
                 DrawCube({ 0.0f, -0.72f, 0.04f }, 0.20f, 0.14f, 0.28f, corSapato);
             rlPopMatrix();
         }
+
         float yTorso = 1.12f + resp;
         DrawCube({ 0.0f, yTorso, 0.0f }, 0.48f, 0.66f, 0.26f, corJaqueta);
         DrawCubeWires({ 0.0f, yTorso, 0.0f }, 0.48f, 0.66f, 0.26f, corContorno);
         DrawCube({ 0.0f, yTorso + 0.02f, 0.135f }, 0.16f, 0.60f, 0.02f, corCamiseta);
-        DrawCube({ -0.15f, yTorso + 0.12f, 0.15f }, 0.07f, 0.16f, 0.07f, Color{ 30, 32, 35, 255 });
-        DrawCube({ -0.15f, yTorso + 0.15f, 0.19f }, 0.06f, 0.06f, 0.02f, Color{ 255, 245, 200, 255 });
+
         float yCabeca = 1.63f + resp;
         DrawCube({ 0.0f, yCabeca, 0.0f }, 0.28f, 0.31f, 0.28f, corPele);
         DrawCubeWires({ 0.0f, yCabeca, 0.0f }, 0.28f, 0.31f, 0.28f, corContorno);
         DrawCube({ 0.0f, yCabeca + 0.13f, -0.01f }, 0.30f, 0.11f, 0.31f, corCabelo);
         DrawCube({ 0.0f, yCabeca + 0.02f, -0.14f }, 0.30f, 0.26f, 0.06f, corCabelo);
-        for (int lado = -1; lado <= 1; lado += 2) {
-            rlPushMatrix();
-                rlTranslatef(0.31f * lado, yTorso + 0.24f, 0.0f);
-                rlRotatef(balanco * 0.85f * lado, 1.0f, 0.0f, 0.0f);
-                DrawCube({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corJaqueta);
-                DrawCubeWires({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corContorno);
-                DrawCube({ 0.0f, -0.55f, 0.0f }, 0.12f, 0.12f, 0.13f, corPele);
-            rlPopMatrix();
-        }
+
+        // Braco esquerdo balancando livre
+        rlPushMatrix();
+            rlTranslatef(0.31f, yTorso + 0.24f, 0.0f);
+            rlRotatef(balanco * 0.85f, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corJaqueta);
+            DrawCubeWires({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corContorno);
+            DrawCube({ 0.0f, -0.55f, 0.0f }, 0.12f, 0.12f, 0.13f, corPele);
+        rlPopMatrix();
+
+        // Braco direito levantado segurando a lanterna na mao
+        rlPushMatrix();
+            rlTranslatef(-0.31f, yTorso + 0.24f, 0.0f);
+            rlRotatef(-48.0f + (balanco * 0.25f), 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.24f, 0.0f }, 0.15f, 0.48f, 0.16f, corJaqueta);
+            DrawCubeWires({ 0.0f, -0.24f, 0.0f }, 0.15f, 0.48f, 0.16f, corContorno);
+            DrawCube({ 0.0f, -0.50f, 0.02f }, 0.12f, 0.12f, 0.13f, corPele);
+            // Lanterna na mao
+            DrawCube({ 0.0f, -0.52f, 0.12f }, 0.07f, 0.07f, 0.24f, Color{ 28, 30, 34, 255 });
+            DrawCube({ 0.0f, -0.52f, 0.25f }, 0.09f, 0.09f, 0.04f, Color{ 255, 248, 210, 255 });
+        rlPopMatrix();
     rlPopMatrix();
 }
 
@@ -107,59 +120,120 @@ const char* fsCode =
     "    vec3 toFrag = fragPos - lightPos;\n"
     "    float dist = length(toFrag);\n"
     "    float spot = dot(normalize(toFrag), normalize(lightDir));\n"
-    "    float cone = smoothstep(0.68, 0.94, spot);\n"
-    "    float atten = clamp(1.0 - dist / 24.0, 0.0, 1.0);\n"
-    "    float luz = 0.28 + (cone * atten * 0.95);\n"
-    "    float neblina = clamp((dist - 5.0) / 26.0, 0.0, 0.92);\n"
-    "    vec3 finalRgb = mix(texel.rgb * luz, vec3(0.56, 0.60, 0.64), neblina);\n"
+    "    float cone = smoothstep(0.65, 0.93, spot);\n"
+    "    float atten = clamp(1.0 - dist / 22.0, 0.0, 1.0);\n"
+    "    float luz = 0.20 + (cone * atten * 1.05);\n"
+    "    // Becos laterais bem escuros quando longe da avenida central\n"
+    "    if (abs(fragPos.x) > 10.6) luz *= 0.35;\n"
+    "    // Neblina estilo Silent Hill (densa e cinza-azulada)\n"
+    "    float neblina = clamp((dist - 3.5) / 18.5, 0.0, 0.96);\n"
+    "    vec3 finalRgb = mix(texel.rgb * luz, vec3(0.58, 0.62, 0.66), neblina);\n"
     "    gl_FragColor = vec4(finalRgb, texel.a);\n"
     "}\n";
 
 Model modAsfalto, modCalcada, modPredio;
 bool modelosRuaProntos = false;
 
+void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
+    rlPushMatrix();
+        rlTranslatef(x, 0.0f, z);
+        rlRotatef(rotY, 0.0f, 1.0f, 0.0f);
+        // Chassi e capo enferrujados
+        DrawCube({ 0.0f, 0.55f, 0.0f }, 1.85f, 0.65f, 4.10f, corLataria);
+        DrawCubeWires({ 0.0f, 0.55f, 0.0f }, 1.85f, 0.65f, 4.10f, Color{ 20, 22, 24, 255 });
+        // Cabine e vidros escuros
+        DrawCube({ 0.0f, 1.12f, -0.25f }, 1.62f, 0.55f, 2.05f, corLataria);
+        DrawCube({ 0.0f, 1.12f, -0.25f }, 1.66f, 0.42f, 1.85f, Color{ 18, 22, 26, 255 });
+        // Rodas e para-choques
+        for (int lx = -1; lx <= 1; lx += 2) {
+            for (int lz = -1; lz <= 1; lz += 2) {
+                DrawCylinderEx({ 0.92f * lx, 0.34f, 1.25f * lz }, { 0.78f * lx, 0.34f, 1.25f * lz }, 0.34f, 0.34f, 10, Color{ 18, 18, 20, 255 });
+            }
+        }
+        DrawCube({ 0.0f, 0.36f,  2.08f }, 1.90f, 0.16f, 0.14f, Color{ 55, 58, 62, 255 });
+        DrawCube({ 0.0f, 0.36f, -2.08f }, 1.90f, 0.16f, 0.14f, Color{ 55, 58, 62, 255 });
+    rlPopMatrix();
+}
+
 void desenharRuaSilentHill() {
     if (!modelosRuaProntos) {
-        Image i1 = GenImageChecked(64, 64, 8, 8, Color{36,38,42,255}, Color{44,46,50,255});
+        Image i1 = GenImageChecked(64, 64, 8, 8, Color{34,36,40,255}, Color{42,44,48,255});
         modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 1, 1));
-        modAsfalto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i1);
+        modAsfalto.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i1);
         UnloadImage(i1);
-        Image i2 = GenImageChecked(32, 32, 8, 8, Color{92,95,100,255}, Color{104,108,114,255});
+        Image i2 = GenImageChecked(32, 32, 8, 8, Color{88,92,96,255}, Color{100,104,110,255});
         modCalcada = LoadModelFromMesh(GenMeshCube(4.4f, 0.24f, 80.0f));
-        modCalcada.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i2);
+        modCalcada.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i2);
         UnloadImage(i2);
-        Image i3 = GenImageChecked(32, 32, 4, 8, Color{78,82,86,255}, Color{66,70,74,255});
+        Image i3 = GenImageChecked(32, 32, 4, 8, Color{72,76,80,255}, Color{60,64,68,255});
         modPredio = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
-        modPredio.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i3);
+        modPredio.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i3);
         UnloadImage(i3);
         modelosRuaProntos = true;
     }
-    DrawModel(modAsfalto, Vector3{ 0.0f, 0.0f, 0.0f }, 1.0f, Color{ 165, 170, 175, 255 });
+
+    // Asfalto e faixas
+    DrawModel(modAsfalto, Vector3{ 0.0f, 0.0f, 0.0f }, 1.0f, Color{ 160, 165, 170, 255 });
     for (float z = -36.0f; z <= 36.0f; z += 4.5f)
-        DrawCube(Vector3{ 0.0f, 0.015f, z }, 0.22f, 0.02f, 2.2f, Color{ 195, 165, 55, 255 });
-    DrawModel(modCalcada, Vector3{ -8.2f, 0.12f, 0.0f }, 1.0f, Color{ 195, 200, 205, 255 });
-    DrawModel(modCalcada, Vector3{  8.2f, 0.12f, 0.0f }, 1.0f, Color{ 195, 200, 205, 255 });
+        DrawCube(Vector3{ 0.0f, 0.015f, z }, 0.22f, 0.02f, 2.2f, Color{ 185, 155, 50, 255 });
+
+    // Calcadas e chao escuro dos becos laterais
+    DrawModel(modCalcada, Vector3{ -8.2f, 0.12f, 0.0f }, 1.0f, Color{ 185, 190, 195, 255 });
+    DrawModel(modCalcada, Vector3{  8.2f, 0.12f, 0.0f }, 1.0f, Color{ 185, 190, 195, 255 });
+    DrawCube(Vector3{ -18.0f, 0.05f, 0.0f }, 16.0f, 0.10f, 80.0f, Color{ 14, 16, 18, 255 });
+    DrawCube(Vector3{  18.0f, 0.05f, 0.0f }, 16.0f, 0.10f, 80.0f, Color{ 14, 16, 18, 255 });
+
+    // Predios separados por becos escuros (espacos de 4m a 5m entre eles)
     struct Predio { float x, z, w, h, d; Color cor; };
     Predio ps[] = {
-        {-14.5f,-28.0f,8.5f,16.0f,16.0f,{85,88,92,255}}, {-14.5f,-10.0f,8.5f,21.0f,17.0f,{95,90,85,255}},
-        {-14.5f,  9.0f,8.5f,14.0f,18.0f,{80,85,90,255}}, {-14.5f, 28.0f,8.5f,19.0f,16.0f,{90,88,84,255}},
-        { 14.5f,-27.0f,8.5f,18.0f,17.0f,{88,85,82,255}}, { 14.5f, -8.0f,8.5f,15.0f,16.0f,{78,84,90,255}},
-        { 14.5f, 10.0f,8.5f,22.0f,17.0f,{92,88,84,255}}, { 14.5f, 28.0f,8.5f,16.0f,16.0f,{82,86,90,255}}
+        {-15.2f,-28.0f,9.5f,16.0f,13.0f,{76,80,84,255}}, {-15.2f,-10.0f,9.5f,21.0f,13.5f,{88,82,78,255}},
+        {-15.2f,  9.0f,9.5f,14.0f,14.0f,{70,76,82,255}}, {-15.2f, 28.0f,9.5f,19.0f,13.0f,{82,80,76,255}},
+        { 15.2f,-27.0f,9.5f,18.0f,13.5f,{80,78,74,255}}, { 15.2f, -8.0f,9.5f,15.0f,13.0f,{68,74,80,255}},
+        { 15.2f, 10.0f,9.5f,22.0f,13.5f,{85,80,76,255}}, { 15.2f, 28.0f,9.5f,16.0f,13.0f,{74,78,84,255}}
     };
     for (int i = 0; i < 8; i++) {
         DrawModelEx(modPredio, Vector3{ ps[i].x, ps[i].h/2.0f, ps[i].z }, Vector3{0,1,0}, 0.0f, Vector3{ ps[i].w, ps[i].h, ps[i].d }, ps[i].cor);
         float fx = (ps[i].x < 0) ? (ps[i].x + ps[i].w/2.0f + 0.04f) : (ps[i].x - ps[i].w/2.0f - 0.04f);
-        for (float wy = 3.5f; wy < ps[i].h - 2.0f; wy += 3.2f)
-            for (float wz = ps[i].z - ps[i].d/2.0f + 2.5f; wz <= ps[i].z + ps[i].d/2.0f - 2.5f; wz += 3.5f)
-                DrawCube(Vector3{ fx, wy, wz }, 0.08f, 1.5f, 1.1f, Color{ 22, 26, 30, 255 });
+        int idxJ = 0;
+        for (float wy = 3.5f; wy < ps[i].h - 2.0f; wy += 3.2f) {
+            for (float wz = ps[i].z - ps[i].d/2.0f + 2.2f; wz <= ps[i].z + ps[i].d/2.0f - 2.2f; wz += 3.2f) {
+                idxJ++;
+                // Vidros quebrados: deixa estilhacos pontudos nas bordas em varias janelas
+                DrawCube(Vector3{ fx, wy, wz }, 0.08f, 1.5f, 1.1f, Color{ 14, 16, 20, 255 });
+                if ((idxJ + i) % 2 == 0) {
+                    DrawCube(Vector3{ fx + (ps[i].x < 0 ? 0.02f : -0.02f), wy + 0.52f, wz - 0.30f }, 0.05f, 0.42f, 0.45f, Color{ 115, 130, 140, 190 });
+                    DrawCube(Vector3{ fx + (ps[i].x < 0 ? 0.02f : -0.02f), wy - 0.48f, wz + 0.28f }, 0.05f, 0.48f, 0.42f, Color{ 115, 130, 140, 190 });
+                } else {
+                    DrawCube(Vector3{ fx + (ps[i].x < 0 ? 0.01f : -0.01f), wy, wz }, 0.04f, 1.42f, 1.02f, Color{ 68, 78, 86, 210 });
+                }
+            }
+        }
     }
+
+    // Postes com lampadas amareladas fracas
     for (float pz = -30.0f; pz <= 30.0f; pz += 15.0f) {
         for (int l = -1; l <= 1; l += 2) {
             float px = l * 6.4f;
-            DrawCylinder(Vector3{ px, 0.24f, pz }, 0.12f, 0.16f, 5.5f, 8, Color{ 48, 52, 56, 255 });
-            DrawCube(Vector3{ px - l*0.7f, 5.65f, pz }, 1.5f, 0.10f, 0.12f, Color{ 48, 52, 56, 255 });
+            DrawCylinder(Vector3{ px, 0.24f, pz }, 0.12f, 0.16f, 5.5f, 8, Color{ 44, 48, 52, 255 });
+            DrawCube(Vector3{ px - l*0.7f, 5.65f, pz }, 1.5f, 0.10f, 0.12f, Color{ 44, 48, 52, 255 });
+            // Lampada amarela fraca + cone de luz suave no chao
+            DrawCube(Vector3{ px - l*1.3f, 5.55f, pz }, 0.38f, 0.14f, 0.24f, Color{ 255, 225, 140, 255 });
+            DrawCylinder(Vector3{ px - l*1.3f, 0.02f, pz }, 2.4f, 0.15f, 5.5f, 12, Color{ 255, 220, 130, 22 });
         }
     }
+
+    // Latas de lixo nas calcadas e entrada dos becos
+    float lixoPos[][2] = { {-6.8f,-19.0f}, {-7.2f,-18.3f}, {6.9f,-16.5f}, {-7.0f,0.5f}, {7.1f,1.2f}, {-6.8f,18.5f}, {7.0f,19.2f} };
+    for (int i = 0; i < 7; i++) {
+        DrawCylinder(Vector3{ lixoPos[i][0], 0.24f, lixoPos[i][1] }, 0.28f, 0.25f, 0.85f, 10, Color{ 72, 78, 82, 255 });
+        DrawCylinderWires(Vector3{ lixoPos[i][0], 0.24f, lixoPos[i][1] }, 0.28f, 0.25f, 0.85f, 10, Color{ 22, 24, 26, 255 });
+        if (i % 2 == 0) DrawCylinder(Vector3{ lixoPos[i][0], 1.09f, lixoPos[i][1] }, 0.30f, 0.29f, 0.08f, 10, Color{ 85, 90, 95, 255 });
+    }
+
+    // Carros abandonados na pista
+    desenharCarroAbandonado(-2.8f, -14.0f,  14.0f, Color{ 82, 46, 42, 255 });
+    desenharCarroAbandonado( 2.9f,   7.5f, -165.0f, Color{ 52, 64, 72, 255 });
+    desenharCarroAbandonado(-2.4f,  23.0f,  -8.0f, Color{ 76, 74, 62, 255 });
 }
 
 int main() {
@@ -227,7 +301,7 @@ int main() {
                 float bw = 580.0f, bh = 58.0f, bx = sw/2 - bw/2;
                 Rectangle botoes[] = { {bx,125,bw,bh}, {bx,193,bw,bh}, {bx,261,bw,bh}, {bx,329,bw,bh}, {bx,397,bw,bh} };
                 Rectangle rVoltar = { sw/2 - 190, sh - 102, 380, 64 };
-                char txtRes[64];
+                char txtRes;
                 const char* nomeRes[] = { "100% (NATIVA)", "75% (ALTA)", "50% (720P PS2)" };
                 std::sprintf(txtRes, "RESOLUCAO 3D: %s (%dx%d)", nomeRes[optNivelRes], resW, resH);
                 const char* textos[] = {
@@ -247,11 +321,11 @@ int main() {
                 DrawText("SALVAR E VOLTAR", (int)(rVoltar.x + 190 - MeasureText("SALVAR E VOLTAR", 26)/2), (int)(rVoltar.y + 19), 26, WHITE);
                 if (clicou) {
                     bool mudou = false;
-                    if (CheckCollisionPointRec(toque, botoes[0])) { optLanterna = !optLanterna; mudou = true; }
-                    if (CheckCollisionPointRec(toque, botoes[1])) { optFps = (optFps == 30) ? 60 : 30; SetTargetFPS(optFps); mudou = true; }
-                    if (CheckCollisionPointRec(toque, botoes[2])) { optSom = !optSom; SetMasterVolume(optSom ? 1.0f : 0.0f); mudou = true; }
-                    if (CheckCollisionPointRec(toque, botoes[3])) { optMostrarFps = !optMostrarFps; mudou = true; }
-                    if (CheckCollisionPointRec(toque, botoes[4])) {
+                    if (CheckCollisionPointRec(toque, botoes)) { optLanterna = !optLanterna; mudou = true; }
+                    if (CheckCollisionPointRec(toque, botoes)) { optFps = (optFps == 30) ? 60 : 30; SetTargetFPS(optFps); mudou = true; }
+                    if (CheckCollisionPointRec(toque, botoes)) { optSom = !optSom; SetMasterVolume(optSom ? 1.0f : 0.0f); mudou = true; }
+                    if (CheckCollisionPointRec(toque, botoes)) { optMostrarFps = !optMostrarFps; mudou = true; }
+                    if (CheckCollisionPointRec(toque, botoes)) {
                         optNivelRes = (optNivelRes + 1) % 3;
                         resW = (int)(GetRenderWidth() * escalasRes[optNivelRes]);
                         resH = (int)(GetRenderHeight() * escalasRes[optNivelRes]);
@@ -267,13 +341,13 @@ int main() {
             continue;
         }
 
-        Rectangle btnMenuHud = { sw - 170.0f, 20.0f, 150.0f, 44.0f };
-        Vector2 baseAnalogico = { 185.0f, sh - 185.0f };
-        float raioBase = 120.0f, eixoX = 0.0f, eixoY = 0.0f;
+        Rectangle btnMenuHud = { sw - 290.0f, 24.0f, 150.0f, 46.0f };
+        Vector2 baseAnalogico = { 230.0f, sh - 205.0f };
+        float raioBase = 128.0f, eixoX = 0.0f, eixoY = 0.0f;
         Vector2 pinoAnalogico = baseAnalogico;
-        Vector2 posBtnA = { sw - 195.0f, sh - 110.0f }, posBtnB = { sw - 110.0f, sh - 195.0f };
-        Vector2 posBtnX = { sw - 280.0f, sh - 195.0f }, posBtnY = { sw - 195.0f, sh - 280.0f };
-        float raioBtn = 45.0f;
+        Vector2 posBtnA = { sw - 275.0f, sh - 125.0f }, posBtnB = { sw - 180.0f, sh - 215.0f };
+        Vector2 posBtnX = { sw - 370.0f, sh - 215.0f }, posBtnY = { sw - 275.0f, sh - 305.0f };
+        float raioBtn = 52.0f;
         bool btnAPress = false, btnBPress = false, btnXPress = false, btnYPress = false;
 
         int tc = GetTouchPointCount();
@@ -281,31 +355,31 @@ int main() {
             Vector2 tp = GetTouchPosition(t);
             if (CheckCollisionPointRec(tp, btnMenuHud)) estadoAtual = TELA_LAUNCHER;
             float d = std::hypot(tp.x - baseAnalogico.x, tp.y - baseAnalogico.y);
-            if (d < raioBase * 1.7f && tp.x < sw * 0.45f) {
+            if (d < raioBase * 1.75f && tp.x < sw * 0.45f) {
                 float dx = tp.x - baseAnalogico.x, dy = tp.y - baseAnalogico.y;
                 if (d > raioBase) { dx = (dx/d)*raioBase; dy = (dy/d)*raioBase; }
                 pinoAnalogico = { baseAnalogico.x + dx, baseAnalogico.y + dy };
                 eixoX = dx / raioBase; eixoY = dy / raioBase;
             }
-            if (CheckCollisionPointCircle(tp, posBtnA, raioBtn * 1.2f)) btnAPress = true;
-            if (CheckCollisionPointCircle(tp, posBtnB, raioBtn * 1.2f)) btnBPress = true;
-            if (CheckCollisionPointCircle(tp, posBtnX, raioBtn * 1.2f)) btnXPress = true;
-            if (CheckCollisionPointCircle(tp, posBtnY, raioBtn * 1.2f)) btnYPress = true;
+            if (CheckCollisionPointCircle(tp, posBtnA, raioBtn * 1.18f)) btnAPress = true;
+            if (CheckCollisionPointCircle(tp, posBtnB, raioBtn * 1.18f)) btnBPress = true;
+            if (CheckCollisionPointCircle(tp, posBtnX, raioBtn * 1.18f)) btnXPress = true;
+            if (CheckCollisionPointCircle(tp, posBtnY, raioBtn * 1.18f)) btnYPress = true;
         }
         if (tc == 0 && IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
             Vector2 mp = GetMousePosition();
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mp, btnMenuHud)) estadoAtual = TELA_LAUNCHER;
             float d = std::hypot(mp.x - baseAnalogico.x, mp.y - baseAnalogico.y);
-            if (d < raioBase * 1.7f && mp.x < sw * 0.45f) {
+            if (d < raioBase * 1.75f && mp.x < sw * 0.45f) {
                 float dx = mp.x - baseAnalogico.x, dy = mp.y - baseAnalogico.y;
                 if (d > raioBase) { dx = (dx/d)*raioBase; dy = (dy/d)*raioBase; }
                 pinoAnalogico = { baseAnalogico.x + dx, baseAnalogico.y + dy };
                 eixoX = dx / raioBase; eixoY = dy / raioBase;
             }
-            if (CheckCollisionPointCircle(mp, posBtnA, raioBtn * 1.2f)) btnAPress = true;
-            if (CheckCollisionPointCircle(mp, posBtnB, raioBtn * 1.2f)) btnBPress = true;
-            if (CheckCollisionPointCircle(mp, posBtnX, raioBtn * 1.2f)) btnXPress = true;
-            if (CheckCollisionPointCircle(mp, posBtnY, raioBtn * 1.2f)) btnYPress = true;
+            if (CheckCollisionPointCircle(mp, posBtnA, raioBtn * 1.18f)) btnAPress = true;
+            if (CheckCollisionPointCircle(mp, posBtnB, raioBtn * 1.18f)) btnBPress = true;
+            if (CheckCollisionPointCircle(mp, posBtnX, raioBtn * 1.18f)) btnXPress = true;
+            if (CheckCollisionPointCircle(mp, posBtnY, raioBtn * 1.18f)) btnYPress = true;
         }
 
         static bool bAnt = false;
@@ -320,8 +394,11 @@ int main() {
             float vel = (-eixoY) * (agachado ? 2.2f : 4.5f) * dt;
             float nx = posHeroi.x + std::sin(rad) * vel;
             float nz = posHeroi.z + std::cos(rad) * vel;
-            if (nx > -9.4f && nx < 9.4f) posHeroi.x = nx;
-            if (nz > -38.5f && nz < 38.5f) posHeroi.z = nz;
+            bool bateuCarro = (std::hypot(nx - (-2.8f), nz - (-14.0f)) < 1.8f) ||
+                              (std::hypot(nx - ( 2.9f), nz - (  7.5f)) < 1.8f) ||
+                              (std::hypot(nx - (-2.4f), nz - ( 23.0f)) < 1.8f);
+            if (!bateuCarro && nx > -13.2f && nx < 13.2f) posHeroi.x = nx;
+            if (!bateuCarro && nz > -38.5f && nz < 38.5f) posHeroi.z = nz;
             passoAnim = (float)GetTime() * 10.0f;
         }
 
@@ -330,18 +407,18 @@ int main() {
         float rightX = -dirZ, rightZ = dirX;
         float altOlhos = agachado ? 1.15f : 1.52f;
         Vector3 alvoCam = { posHeroi.x - (dirX * 2.45f) + (rightX * 0.58f), altOlhos + 0.12f, posHeroi.z - (dirZ * 2.45f) + (rightZ * 0.58f) };
-        if (alvoCam.x < -9.2f) alvoCam.x = -9.2f; if (alvoCam.x > 9.2f) alvoCam.x = 9.2f;
+        if (alvoCam.x < -12.8f) alvoCam.x = -12.8f; if (alvoCam.x > 12.8f) alvoCam.x = 12.8f;
         if (alvoCam.z < -38.5f) alvoCam.z = -38.5f; if (alvoCam.z > 38.5f) alvoCam.z = 38.5f;
         camera.position = alvoCam;
         camera.target = { posHeroi.x + (dirX * 3.5f) + (rightX * 0.30f), altOlhos - 0.12f, posHeroi.z + (dirZ * 3.5f) + (rightZ * 0.30f) };
 
-        float posLuz[] = { posHeroi.x, altOlhos, posHeroi.z };
-        float dirLuz[] = { dirX, -0.12f, dirZ };
+        float posLuz[] = { posHeroi.x + (rightX * 0.32f) + (dirX * 0.25f), altOlhos - 0.25f, posHeroi.z + (rightZ * 0.32f) + (dirZ * 0.25f) };
+        float dirLuz[] = { dirX, -0.10f, dirZ };
         SetShaderValue(shaderConsole, locLightPos, posLuz, SHADER_UNIFORM_VEC3);
         SetShaderValue(shaderConsole, locLightDir, dirLuz, SHADER_UNIFORM_VEC3);
 
         BeginTextureMode(targetRes);
-        ClearBackground(Color{ 142, 152, 162, 255 });
+        ClearBackground(Color{ 148, 158, 168, 255 });
         BeginMode3D(camera);
             if (optLanterna) BeginShaderMode(shaderConsole);
             desenharRuaSilentHill();
@@ -354,24 +431,24 @@ int main() {
         ClearBackground(BLACK);
         DrawTexturePro(targetRes.texture, Rectangle{ 0.0f, 0.0f, (float)targetRes.texture.width, -(float)targetRes.texture.height }, Rectangle{ 0.0f, 0.0f, sw, sh }, Vector2{ 0.0f, 0.0f }, 0.0f, WHITE);
 
-        DrawCircleV(baseAnalogico, raioBase, Color{ 20, 26, 32, 185 });
-        DrawCircleLines((int)baseAnalogico.x, (int)baseAnalogico.y, raioBase, Color{ 100, 125, 145, 230 });
-        DrawCircleV(pinoAnalogico, 50.0f, Color{ 58, 68, 78, 240 });
-        DrawCircleV(pinoAnalogico, 24.0f, Color{ 36, 42, 50, 245 });
+        DrawCircleV(baseAnalogico, raioBase, Color{ 20, 26, 32, 195 });
+        DrawCircleLines((int)baseAnalogico.x, (int)baseAnalogico.y, raioBase, Color{ 115, 140, 160, 235 });
+        DrawCircleV(pinoAnalogico, 54.0f, Color{ 58, 68, 78, 240 });
+        DrawCircleV(pinoAnalogico, 26.0f, Color{ 36, 42, 50, 245 });
 
         auto btnXbox = [&](Vector2 c, const char* txt, Color cor, bool on) {
-            DrawCircleV(c, raioBtn, Color{ 14, 18, 22, 220 });
-            DrawCircleV(c, raioBtn - 4.0f, on ? WHITE : Color{ cor.r, cor.g, cor.b, 220 });
-            int lw = MeasureText(txt, 32);
-            DrawText(txt, (int)c.x - lw/2, (int)c.y - 16, 32, on ? BLACK : WHITE);
+            DrawCircleV(c, raioBtn, Color{ 14, 18, 22, 225 });
+            DrawCircleV(c, raioBtn - 5.0f, on ? WHITE : Color{ cor.r, cor.g, cor.b, 225 });
+            int lw = MeasureText(txt, 34);
+            DrawText(txt, (int)c.x - lw/2, (int)c.y - 17, 34, on ? BLACK : WHITE);
         };
         btnXbox(posBtnA, "A", Color{ 46, 180, 75, 255 }, btnAPress);
         btnXbox(posBtnB, "B", Color{ 210, 52, 52, 255 }, btnBPress);
         btnXbox(posBtnX, "X", Color{ 48, 125, 220, 255 }, btnXPress);
         btnXbox(posBtnY, "Y", Color{ 230, 180, 35, 255 }, btnYPress);
 
-        DrawRectangleRounded(btnMenuHud, 0.25f, 8, Color{ 35, 45, 55, 220 });
-        DrawText("MENU", (int)(btnMenuHud.x + 75 - MeasureText("MENU", 20)/2), (int)(btnMenuHud.y + 12), 20, WHITE);
+        DrawRectangleRounded(btnMenuHud, 0.25f, 8, Color{ 35, 45, 55, 225 });
+        DrawText("MENU", (int)(btnMenuHud.x + 75 - MeasureText("MENU", 22)/2), (int)(btnMenuHud.y + 12), 22, WHITE);
         if (optMostrarFps) DrawFPS(30, 25);
         EndDrawing();
     }
