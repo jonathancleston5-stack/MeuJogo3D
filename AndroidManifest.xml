@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http:/\://android.com/apk/res/android" package="com.jonathan.meujogo3d" android:versionCode="1" android:versionName="1.0">
+<manifest xmlns:android="http://://android.com" package="com.jonathan.meujogo3d" android:versionCode="1" android:versionName="1.0">
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="33" />
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <application android:label="MeuJogo3D" android:hasCode="false">
