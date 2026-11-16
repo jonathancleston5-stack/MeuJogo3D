@@ -122,15 +122,15 @@ void desenharRuaSilentHill() {
     if (!modelosRuaProntos) {
         Image i1 = GenImageChecked(64, 64, 8, 8, Color{36,38,42,255}, Color{44,46,50,255});
         modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 1, 1));
-        modAsfalto.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i1);
+        modAsfalto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i1);
         UnloadImage(i1);
         Image i2 = GenImageChecked(32, 32, 8, 8, Color{92,95,100,255}, Color{104,108,114,255});
         modCalcada = LoadModelFromMesh(GenMeshCube(4.4f, 0.24f, 80.0f));
-        modCalcada.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i2);
+        modCalcada.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i2);
         UnloadImage(i2);
         Image i3 = GenImageChecked(32, 32, 4, 8, Color{78,82,86,255}, Color{66,70,74,255});
         modPredio = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
-        modPredio.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i3);
+        modPredio.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i3);
         UnloadImage(i3);
         modelosRuaProntos = true;
     }
