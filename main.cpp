@@ -102,17 +102,15 @@ float escalaHeroi = 1.0f;
 float offsetYHeroi = 0.0f;
 
 void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool ehJogador, bool vivo, bool alerta) {
-    float balanco = (cicloPasso > 0.0f) ? std::abs(std::sin(cicloPasso)) * 0.05f : 0.0f;
-    Model *mAtual = &modHeroi;
-    if (cicloPasso > 0.0f) {
-        float fase = std::sin(cicloPasso);
-        if (fase > 0.25f) mAtual = &modHeroiW1;
-        else if (fase < -0.25f) mAtual = &modHeroiW2;
-    }
+    float passoVertical = (cicloPasso > 0.0f) ? std::abs(std::sin(cicloPasso)) * 0.045f : std::sin((float)GetTime() * 2.2f) * 0.008f;
+    float balancoLateral = (cicloPasso > 0.0f) ? std::sin(cicloPasso) * 2.2f : 0.0f;
+    float inclinacaoFrente = (cicloPasso > 0.0f) ? 3.5f : 0.0f;
     rlPushMatrix();
-        rlTranslatef(pos.x, pos.y + offsetYHeroi + balanco, pos.z);
+        rlTranslatef(pos.x, pos.y + offsetYHeroi + passoVertical, pos.z);
         rlRotatef(angulo, 0.0f, 1.0f, 0.0f);
-        DrawModel(*mAtual, Vector3{ 0.0f, 0.0f, 0.0f }, escalaHeroi, WHITE);
+        rlRotatef(balancoLateral, 0.0f, 0.0f, 1.0f);
+        rlRotatef(inclinacaoFrente, 1.0f, 0.0f, 0.0f);
+        DrawModel(modHeroi, Vector3{ 0.0f, 0.0f, 0.0f }, escalaHeroi, WHITE);
     rlPopMatrix();
 }
 
