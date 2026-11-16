@@ -20,7 +20,8 @@ jobs:
           BIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
           GLUE=$NDK/sources/android/native_app_glue
           cp $NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so apk/lib/arm64-v8a/
-          $BIN/aarch64-linux-android24-clang++ -shared -fPIC -o apk/lib/arm64-v8a/libmain.so main.cpp $GLUE/android_native_app_glue.c raylib/src/libraylib.a -O2 -std=c++17 -DPLATFORM_ANDROID -DGRAPHICS_API_OPENGL_ES2 -Iraylib/src -I$GLUE -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lm -u ANativeActivity_onCreate
+          $BIN/aarch64-linux-android24-clang -c $GLUE/android_native_app_glue.c -o glue.o -O2 -fPIC -I$GLUE
+          $BIN/aarch64-linux-android24-clang++ -shared -fPIC -Wl,--wrap=fopen -o apk/lib/arm64-v8a/libmain.so main.cpp glue.o raylib/src/libraylib.a -O2 -std=c++17 -DPLATFORM_ANDROID -DGRAPHICS_API_OPENGL_ES2 -Iraylib/src -I$GLUE -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lm -u ANativeActivity_onCreate
           BT=$ANDROID_HOME/build-tools/33.0.2
           PL=$ANDROID_HOME/platforms/android-33/android.jar
           $BT/aapt package -f -M AndroidManifest.xml -I $PL -F raw.apk apk
