@@ -159,15 +159,15 @@ void desenharRuaSilentHill() {
     if (!modelosRuaProntos) {
         Image i1 = GenImageChecked(64, 64, 8, 8, Color{34,36,40,255}, Color{42,44,48,255});
         modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 1, 1));
-        modAsfalto.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i1);
+        modAsfalto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i1);
         UnloadImage(i1);
         Image i2 = GenImageChecked(32, 32, 8, 8, Color{88,92,96,255}, Color{100,104,110,255});
         modCalcada = LoadModelFromMesh(GenMeshCube(4.4f, 0.24f, 80.0f));
-        modCalcada.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i2);
+        modCalcada.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i2);
         UnloadImage(i2);
         Image i3 = GenImageChecked(32, 32, 4, 8, Color{72,76,80,255}, Color{60,64,68,255});
         modPredio = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
-        modPredio.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i3);
+        modPredio.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i3);
         UnloadImage(i3);
         modelosRuaProntos = true;
     }
@@ -301,7 +301,7 @@ int main() {
                 float bw = 580.0f, bh = 58.0f, bx = sw/2 - bw/2;
                 Rectangle botoes[] = { {bx,125,bw,bh}, {bx,193,bw,bh}, {bx,261,bw,bh}, {bx,329,bw,bh}, {bx,397,bw,bh} };
                 Rectangle rVoltar = { sw/2 - 190, sh - 102, 380, 64 };
-                char txtRes;
+                char txtRes[64];
                 const char* nomeRes[] = { "100% (NATIVA)", "75% (ALTA)", "50% (720P PS2)" };
                 std::sprintf(txtRes, "RESOLUCAO 3D: %s (%dx%d)", nomeRes[optNivelRes], resW, resH);
                 const char* textos[] = {
@@ -321,11 +321,11 @@ int main() {
                 DrawText("SALVAR E VOLTAR", (int)(rVoltar.x + 190 - MeasureText("SALVAR E VOLTAR", 26)/2), (int)(rVoltar.y + 19), 26, WHITE);
                 if (clicou) {
                     bool mudou = false;
-                    if (CheckCollisionPointRec(toque, botoes)) { optLanterna = !optLanterna; mudou = true; }
-                    if (CheckCollisionPointRec(toque, botoes)) { optFps = (optFps == 30) ? 60 : 30; SetTargetFPS(optFps); mudou = true; }
-                    if (CheckCollisionPointRec(toque, botoes)) { optSom = !optSom; SetMasterVolume(optSom ? 1.0f : 0.0f); mudou = true; }
-                    if (CheckCollisionPointRec(toque, botoes)) { optMostrarFps = !optMostrarFps; mudou = true; }
-                    if (CheckCollisionPointRec(toque, botoes)) {
+                    if (CheckCollisionPointRec(toque, botoes[0])) { optLanterna = !optLanterna; mudou = true; }
+                    if (CheckCollisionPointRec(toque, botoes[1])) { optFps = (optFps == 30) ? 60 : 30; SetTargetFPS(optFps); mudou = true; }
+                    if (CheckCollisionPointRec(toque, botoes[2])) { optSom = !optSom; SetMasterVolume(optSom ? 1.0f : 0.0f); mudou = true; }
+                    if (CheckCollisionPointRec(toque, botoes[3])) { optMostrarFps = !optMostrarFps; mudou = true; }
+                    if (CheckCollisionPointRec(toque, botoes[4])) {
                         optNivelRes = (optNivelRes + 1) % 3;
                         resW = (int)(GetRenderWidth() * escalasRes[optNivelRes]);
                         resH = (int)(GetRenderHeight() * escalasRes[optNivelRes]);
@@ -412,8 +412,8 @@ int main() {
         camera.position = alvoCam;
         camera.target = { posHeroi.x + (dirX * 3.5f) + (rightX * 0.30f), altOlhos - 0.12f, posHeroi.z + (dirZ * 3.5f) + (rightZ * 0.30f) };
 
-        float posLuz[] = { posHeroi.x + (rightX * 0.32f) + (dirX * 0.25f), altOlhos - 0.25f, posHeroi.z + (rightZ * 0.32f) + (dirZ * 0.25f) };
-        float dirLuz[] = { dirX, -0.10f, dirZ };
+        float posLuz[3] = { posHeroi.x + (rightX * 0.32f) + (dirX * 0.25f), altOlhos - 0.25f, posHeroi.z + (rightZ * 0.32f) + (dirZ * 0.25f) };
+        float dirLuz[3] = { dirX, -0.10f, dirZ };
         SetShaderValue(shaderConsole, locLightPos, posLuz, SHADER_UNIFORM_VEC3);
         SetShaderValue(shaderConsole, locLightDir, dirLuz, SHADER_UNIFORM_VEC3);
 
