@@ -756,7 +756,38 @@ int main() {
                 }
             }
         }
-                        SetShaderValue(shaderConsole, viewPosLoc, &camera.position, SHADER_UNIFORM_VEC3);
+                                // Camera fixa sobre o ombro direito estilo Resident Evil 4 Classico
+        float radCam = anguloSnake * DEG2RAD;
+        float dirX = std::sin(radCam);
+        float dirZ = std::cos(radCam);
+        float rightX = -dirZ;
+        float rightZ = dirX;
+
+        float distAtras = 2.45f;
+        float offsetOmbro = 0.58f;
+        float alturaOlhos = agachado ? 1.15f : 1.52f;
+
+        Vector3 alvoCamPos = {
+            posSnake.x - (dirX * distAtras) + (rightX * offsetOmbro),
+            alturaOlhos + 0.12f,
+            posSnake.z - (dirZ * distAtras) + (rightZ * offsetOmbro)
+        };
+
+        if (alvoCamPos.x < -10.5f) alvoCamPos.x = -10.5f;
+        if (alvoCamPos.x >  10.5f) alvoCamPos.x =  10.5f;
+        if (alvoCamPos.z < -10.5f) alvoCamPos.z = -10.5f;
+        if (alvoCamPos.z >  10.5f) alvoCamPos.z =  10.5f;
+
+        camera.position = alvoCamPos;
+        camera.target = {
+            posSnake.x + (dirX * 3.5f) + (rightX * 0.30f),
+            alturaOlhos - 0.12f,
+            posSnake.z + (dirZ * 3.5f) + (rightZ * 0.30f)
+        };
+        camera.up = { 0.0f, 1.0f, 0.0f };
+        camera.fovy = 52.0f;
+
+        SetShaderValue(shaderConsole, viewPosLoc, &camera.position, SHADER_UNIFORM_VEC3);
          float radLuz = anguloSnake * DEG2RAD;
         float alturaLuz = agachado ? 0.85f : 1.35f;
         Vector3 posLanterna = { posSnake.x + std::sin(radLuz) * 0.3f, alturaLuz, posSnake.z + std::cos(radLuz) * 0.3f };
