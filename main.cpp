@@ -526,12 +526,12 @@ int main() {
                 const char* txtFps = (optFps == 60) ? "LIMITE DE FPS: 60 FPS" : "LIMITE DE FPS: 30 FPS";
                 const char* txtSom = optSom ? "SOM: LIGADO" : "SOM: MUDO";
                 const char* txtShow = optMostrarFps ? "CONTADOR FPS: VISIVEL" : "CONTADOR FPS: OCULTO";
-                char txtRes;
-                const char* nomeRes = { "100% (NATIVA)", "75% (ALTA)", "50% (720P PS2)" };
+                char txtRes[64];
+                const char* nomeRes[] = { "100% (NATIVA)", "75% (ALTA)", "50% (720P PS2)" };
                 sprintf(txtRes, "RESOLUCAO 3D: %s (%dx%d)", nomeRes[optNivelRes], resW, resH);
 
-                Rectangle botoes = { rGfx, rFps, rSom, rShowFps, rRes };
-                const char* textos = { txtGfx, txtFps, txtSom, txtShow, txtRes };
+                Rectangle botoes[] = { rGfx, rFps, rSom, rShowFps, rRes };
+                const char* textos[] = { txtGfx, txtFps, txtSom, txtShow, txtRes };
                 for (int i = 0; i < 5; i++) {
                     DrawRectangleRounded(botoes[i], 0.22f, 8, Color{ 30, 42, 52, 255 });
                     DrawRectangleRoundedLinesEx(botoes[i], 0.22f, 8, 2, Color{ 95, 165, 140, 220 });
