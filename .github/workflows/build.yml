@@ -9,7 +9,7 @@ jobs:
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
       - name: Compilar Raylib ARM64
         run: |
-          git clone --depth 1 https://github.com
+          git clone --depth 1 https://github.com/raysan5/raylib.git
           cd raylib/src
           NDK=$ANDROID_HOME/ndk/25.2.9519653
           BIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
