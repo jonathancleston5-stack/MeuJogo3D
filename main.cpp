@@ -97,102 +97,82 @@ Sound criarSomAK47() {
 Model modPistola = { 0 };
 Model modRifle   = { 0 };
 
-void desenharBonecoPS1(Vector3 pos, float anguloGraus, float cicloPasso, bool agachado, bool vivo, bool ehJogador) {
-    // Sombra de contato no chao (tira o aspecto de boneco flutuando)
-    DrawCylinder(Vector3{ pos.x, 0.01f, pos.z }, 0.48f, 0.48f, 0.01f, 16, Fade(BLACK, 0.45f));
-
+void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool ehJogador, bool vivo, bool alerta) {
     rlPushMatrix();
-        rlTranslatef(pos.x, 0.0f, pos.z);
-        rlRotatef(anguloGraus, 0.0f, 1.0f, 0.0f);
+        rlTranslatef(pos.x, pos.y, pos.z);
+        rlRotatef(angulo, 0.0f, 1.0f, 0.0f);
 
-        if (!vivo) {
-            rlTranslatef(0.0f, 0.22f, 0.0f);
-            rlRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-        }
+        Color corJaqueta   = { 48, 62, 74, 255 };    // Jaqueta azul-acinzentada (estilo Harry Mason)
+        Color corCamiseta  = { 210, 212, 208, 255 }; // Camiseta branca por baixo
+        Color corJeans     = { 32, 44, 68, 255 };    // Calca jeans escura
+        Color corPele      = { 215, 178, 148, 255 }; // Rosto e maos
+        Color corCabelo    = { 58, 40, 28, 255 };    // Cabelo castanho escuro PS1
+        Color corSapato    = { 38, 28, 22, 255 };    // Botas marrons escuras
+        Color corContorno  = { 12, 14, 18, 255 };
 
-        Color corRoupa   = ehJogador ? Color{ 42, 62, 85, 255 }   : Color{ 135, 38, 38, 255 };
-        Color corColete  = ehJogador ? Color{ 25, 32, 42, 255 }   : Color{ 55, 25, 25, 255 };
-        Color corPele    = Color{ 218, 178, 142, 255 };
-        Color corDetalhe = ehJogador ? Color{ 30, 95, 175, 255 }  : Color{ 215, 50, 50, 255 };
-        Color corBota    = Color{ 22, 24, 28, 255 };
+        float balanco = (cicloPasso > 0.0f) ? std::sin(cicloPasso) * 28.0f : 0.0f;
+        float respiracao = (cicloPasso == 0.0f) ? std::sin((float)GetTime() * 2.8f) * 0.015f : 0.0f;
 
-        float balanco = vivo ? (std::sin(cicloPasso) * 26.0f) : 0.0f;
-        float alturaQuadril = agachado ? 0.56f : 0.88f;
-        float altPerna = agachado ? 0.52f : 0.84f;
-
-        // Perna Esquerda (coxa + joelho + bota arredondada)
+        // --- PERNAS (JEANS) ---
         rlPushMatrix();
-            rlTranslatef(-0.20f, alturaQuadril, 0.0f);
-            rlRotatef(agachado ? -35.0f : balanco, 1.0f, 0.0f, 0.0f);
-            DrawCapsule(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ 0.0f, -altPerna + 0.16f, 0.0f }, 0.13f, 8, 8, corRoupa);
-            DrawCylinder(Vector3{ 0.0f, -altPerna, 0.04f }, 0.13f, 0.15f, 0.22f, 10, corBota);
+            rlTranslatef(-0.13f, 0.78f, 0.0f);
+            rlRotatef(balanco, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corJeans);
+            DrawCubeWires({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corContorno);
+            DrawCube({ 0.0f, -0.72f, 0.04f }, 0.20f, 0.14f, 0.28f, corSapato);
         rlPopMatrix();
 
-        // Perna Direita
         rlPushMatrix();
-            rlTranslatef(0.20f, alturaQuadril, 0.0f);
-            rlRotatef(agachado ? -35.0f : -balanco, 1.0f, 0.0f, 0.0f);
-            DrawCapsule(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ 0.0f, -altPerna + 0.16f, 0.0f }, 0.13f, 8, 8, corRoupa);
-            DrawCylinder(Vector3{ 0.0f, -altPerna, 0.04f }, 0.13f, 0.15f, 0.22f, 10, corBota);
+            rlTranslatef(0.13f, 0.78f, 0.0f);
+            rlRotatef(-balanco, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corJeans);
+            DrawCubeWires({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corContorno);
+            DrawCube({ 0.0f, -0.72f, 0.04f }, 0.20f, 0.14f, 0.28f, corSapato);
         rlPopMatrix();
 
-        // Quadril e Cinto Tatico
-        DrawCylinder(Vector3{ 0.0f, alturaQuadril - 0.05f, 0.0f }, 0.30f, 0.28f, 0.18f, 12, corBota);
+        // --- TORSO (JAQUETA ABERTA + CAMISETA BRANCA + LANTERNA NO BOLSO) ---
+        float yTorso = 1.12f + respiracao;
+        DrawCube({ 0.0f, yTorso, 0.0f }, 0.48f, 0.66f, 0.26f, corJaqueta);
+        DrawCubeWires({ 0.0f, yTorso, 0.0f }, 0.48f, 0.66f, 0.26f, corContorno);
+        // Camiseta branca visivel na frente da jaqueta aberta
+        DrawCube({ 0.0f, yTorso + 0.02f, 0.135f }, 0.16f, 0.60f, 0.02f, corCamiseta);
+        // Gola da jaqueta
+        DrawCube({ -0.14f, yTorso + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
+        DrawCube({  0.14f, yTorso + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
+        // Lanterna presa no bolso esquerdo do peito
+        DrawCube({ -0.15f, yTorso + 0.12f, 0.15f }, 0.07f, 0.16f, 0.07f, Color{ 30, 32, 35, 255 });
+        DrawCube({ -0.15f, yTorso + 0.15f, 0.19f }, 0.06f, 0.06f, 0.02f, Color{ 255, 245, 200, 255 });
 
-        // Tronco arredondado (mais largo nos ombros, fino na cintura) + Colete Tatico
-        float yTronco = alturaQuadril + 0.36f;
-        DrawCylinder(Vector3{ 0.0f, yTronco - 0.32f, 0.0f }, 0.36f, 0.28f, 0.68f, 12, corRoupa);
-        DrawCylinder(Vector3{ 0.0f, yTronco - 0.24f, 0.02f }, 0.38f, 0.31f, 0.50f, 12, corColete);
-        // Mochila/Equipamento nas costas
-        DrawCube(Vector3{ 0.0f, yTronco + 0.04f, -0.28f }, 0.36f, 0.42f, 0.16f, corBota);
+        // --- CABECA E CABELO ESTILO PS1 ---
+        float yCabeca = 1.63f + respiracao;
+        DrawCube({ 0.0f, yCabeca, 0.0f }, 0.28f, 0.31f, 0.28f, corPele);
+        DrawCubeWires({ 0.0f, yCabeca, 0.0f }, 0.28f, 0.31f, 0.28f, corContorno);
+        // Cabelo castanho (topo, nuca e costeletas)
+        DrawCube({ 0.0f, yCabeca + 0.13f, -0.01f }, 0.30f, 0.11f, 0.31f, corCabelo);
+        DrawCube({ 0.0f, yCabeca + 0.02f, -0.14f }, 0.30f, 0.26f, 0.06f, corCabelo);
+        DrawCube({ -0.14f, yCabeca + 0.04f, -0.02f }, 0.04f, 0.18f, 0.24f, corCabelo);
+        DrawCube({  0.14f, yCabeca + 0.04f, -0.02f }, 0.04f, 0.18f, 0.24f, corCabelo);
 
-        // Braco Esquerdo (ombro esferico + braco cilindrico + luva)
+        // --- BRACOS SOLTOS (SEM ARMAS) ---
         rlPushMatrix();
-            rlTranslatef(-0.44f, yTronco + 0.26f, 0.0f);
-            DrawSphere(Vector3{ 0.0f, 0.0f, 0.0f }, 0.14f, corRoupa);
-            rlRotatef(-balanco * 0.8f, 1.0f, 0.0f, 0.0f);
-            DrawCapsule(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ 0.0f, -0.52f, 0.0f }, 0.10f, 8, 8, corRoupa);
-            DrawSphere(Vector3{ 0.0f, -0.58f, 0.0f }, 0.10f, corBota);
+            rlTranslatef(-0.31f, yTorso + 0.24f, 0.0f);
+            rlRotatef(-balanco * 0.85f, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corJaqueta);
+            DrawCubeWires({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corContorno);
+            DrawCube({ 0.0f, -0.55f, 0.0f }, 0.12f, 0.12f, 0.13f, corPele);
         rlPopMatrix();
 
-        // Braco Direito + Arma detalhada (Pistola com silenciador ou Fuzil)
         rlPushMatrix();
-            rlTranslatef(0.44f, yTronco + 0.26f, 0.0f);
-            DrawSphere(Vector3{ 0.0f, 0.0f, 0.0f }, 0.14f, corRoupa);
-            rlRotatef(vivo ? -90.0f : 0.0f, 1.0f, 0.0f, 0.0f);
-            DrawCapsule(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ 0.0f, -0.50f, 0.0f }, 0.10f, 8, 8, corRoupa);
-            DrawSphere(Vector3{ 0.0f, -0.56f, 0.0f }, 0.10f, corBota);
-                                           DrawModelEx(modPistola, Vector3{ 0.0f, -0.62f, 0.05f }, Vector3{ 0.0f, 1.0f, 0.0f }, 90.0f, Vector3{ 0.012f, 0.012f, 0.012f }, WHITE);
- 
-
-
+            rlTranslatef(0.31f, yTorso + 0.24f, 0.0f);
+            rlRotatef(balanco * 0.85f, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corJaqueta);
+            DrawCubeWires({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corContorno);
+            DrawCube({ 0.0f, -0.55f, 0.0f }, 0.12f, 0.12f, 0.13f, corPele);
         rlPopMatrix();
 
-        float yCabeca = yTronco + 0.62f;
-        DrawSphere(Vector3{ 0.0f, yCabeca, 0.0f }, 0.24f, corPele);
-        if (ehJogador) {
-            
-            // Cabelo + Bandana tatica com pontas atras
-            DrawCylinder(Vector3{ 0.0f, yCabeca + 0.06f, 0.0f }, 0.24f, 0.25f, 0.16f, 12, Color{ 55, 42, 32, 255 });
-            DrawCylinder(Vector3{ 0.0f, yCabeca + 0.04f, 0.0f }, 0.255f, 0.255f, 0.08f, 12, corDetalhe);
-            DrawCube(Vector3{ -0.06f, yCabeca - 0.04f, -0.26f }, 0.06f, 0.22f, 0.04f, corDetalhe);
-            DrawCube(Vector3{  0.06f, yCabeca - 0.02f, -0.26f }, 0.06f, 0.18f, 0.04f, corDetalhe);
-        } else {
-            // Capacete militar + Viseira luminosa
-            DrawSphere(Vector3{ 0.0f, yCabeca + 0.05f, -0.02f }, 0.255f, Color{ 45, 48, 52, 255 });
-            DrawCube(Vector3{ 0.0f, yCabeca + 0.03f, 0.22f }, 0.28f, 0.09f, 0.08f, corDetalhe);
-        }
     rlPopMatrix();
 }
 
-
-bool pontoBloqueado3D(float x, float z, const std::vector<BoundingBox>& caixas) {
-    for (const auto& box : caixas) {
-        if (x >= box.min.x && x <= box.max.x && z >= box.min.z && z <= box.max.z) return true;
-    }
-    return false;
-    
-}
 // Shader embutido de Iluminacao Direcional + Nevoa (Fog) estilo Console
 const char* vsCodigo = R"(
 #version 100
@@ -454,7 +434,7 @@ int main() {
         float sw = (float)GetScreenWidth();
         float sh = (float)GetScreenHeight();
         centroBtnAtirar = { sw - 125.0f, sh - 125.0f };
-        centroBtnAgachar = { sw - 265.0f, sh - 95.0f };
+        centroBtnAgachar = { sw - 115.0f, sh - 105.0f };
         btnCamera = { sw - 170.0f, 20.0f, 150.0f, 44.0f };
         Rectangle btnMenuHud = { sw - 335.0f, 20.0f, 150.0f, 44.0f };
 
@@ -534,9 +514,11 @@ int main() {
                     if (CheckCollisionPointRec(toque, rVoltar)) estadoAtual = TELA_LAUNCHER;
                 }
             }
-                    DrawRectangleRounded(btnMenuHud, 0.25f, 8, Color{ 35, 45, 55, 220 });
+                    if (estadoAtual == TELA_JOGANDO) {
+        DrawRectangleRounded(btnMenuHud, 0.25f, 8, Color{ 35, 45, 55, 220 });
         DrawRectangleRoundedLinesEx(btnMenuHud, 0.25f, 8, 2, Color{ 90, 220, 150, 255 });
         DrawText("MENU", (int)(btnMenuHud.x + 75 - MeasureText("MENU", 20)/2), (int)(btnMenuHud.y + 12), 20, WHITE);
+        }
         EndDrawing();
             continue;
         }
@@ -575,7 +557,7 @@ int main() {
         if (moveEsq)   dx -= 1.0f;
         if (moveDir)   dx += 1.0f;
 
-                if (modoPrimeiraPessoa) {
+                if (false && modoPrimeiraPessoa) {
             // Na 1a pessoa: < e > giram a visao; ^ e v andam para frente e para tras
             if (dx != 0.0f) anguloSnake -= dx * 2.8f;
             float rad = anguloSnake * DEG2RAD;
@@ -642,7 +624,7 @@ int main() {
         }
 
         float radSnake = anguloSnake * DEG2RAD;
-        if (modoPrimeiraPessoa) {
+        if (false && modoPrimeiraPessoa) {
             float alturaOlhos = agachado ? 0.95f : 1.65f;
             camera.position = { posSnake.x + std::sin(radSnake) * 0.25f, alturaOlhos, posSnake.z + std::cos(radSnake) * 0.25f };
             camera.target   = { posSnake.x + std::sin(radSnake) * 8.0f,  alturaOlhos, posSnake.z + std::cos(radSnake) * 8.0f };
@@ -870,7 +852,7 @@ int main() {
                // for (const auto& g : guardas) {
                  //   desenharBonecoPS1(g.pos, g.angulo, g.cicloPasso, false, g.vida > 0, false);
                // } 
-              if (modoPrimeiraPessoa) {
+              if (false && modoPrimeiraPessoa) {
             float balancoArma = (cicloPassoSnake > 0.0f) ? std::sin(cicloPassoSnake * 2.0f) * 0.015f : 0.0f;
 
             rlPushMatrix();
@@ -905,7 +887,7 @@ int main() {
         DrawText(modoPrimeiraPessoa ? "TACTICAL" : "1ST VIEW", (int)btnCamera.x + 24, (int)btnCamera.y + 12, 14, modoPrimeiraPessoa ? BLACK : hudTexto);
 
         // Mira central apenas na Primeira Pessoa
-        if (modoPrimeiraPessoa) {
+        if (false && modoPrimeiraPessoa) {
             int cx = LARGURA / 2;
             int cy = ALTURA / 2;
             DrawCircleLines(cx, cy, 8, hudBorda);
@@ -952,12 +934,6 @@ int main() {
         DrawCircleLines((int)centroBtnAgachar.x, (int)centroBtnAgachar.y, raioBtnAgachar, hudBorda);
         DrawCircleLines((int)centroBtnAgachar.x, (int)centroBtnAgachar.y, raioBtnAgachar - 4, hudVerde);
         DrawText("CROUCH", (int)(centroBtnAgachar.x - MeasureText("CROUCH", 12) / 2), (int)(centroBtnAgachar.y - 6), 12, agachado ? BLACK : hudTexto);
-
-        // BOTÃO DE DISPARO (FIRE)
-        DrawCircleV(centroBtnAtirar, raioBtnAtirar, hudVermelho);
-        DrawCircleLines((int)centroBtnAtirar.x, (int)centroBtnAtirar.y, raioBtnAtirar, WHITE);
-        DrawCircleLines((int)centroBtnAtirar.x, (int)centroBtnAtirar.y, raioBtnAtirar - 4, hudVermelho);
-        DrawText("FIRE", (int)(centroBtnAtirar.x - MeasureText("FIRE", 15) / 2), (int)(centroBtnAtirar.y - 7), 15, WHITE);
 
         // CONTADOR DE FPS ESTILIZADO
         DrawRectangleRounded(Rectangle{ 16, 94, 92, 24 }, 0.2f, 6, hudFundo);
