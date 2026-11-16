@@ -436,7 +436,91 @@ int main() {
     Vector2 centroBtnAtirar  = { (float)LARGURA - 115.0f, (float)ALTURA - 195.0f };
     float raioBtnAtirar      = 68.0f;
 
+    
+    enum EstadoJogo { TELA_LAUNCHER, TELA_OPCOES, TELA_JOGANDO };
+    EstadoJogo estadoAtual = TELA_LAUNCHER;
+    bool optLanterna = true;
+    int optFps = 30;
+    bool optSom = true;
+    bool optMostrarFps = true;
+
     while (!WindowShouldClose()) {
+        float sw = (float)GetScreenWidth();
+        float sh = (float)GetScreenHeight();
+        centroBtnAtirar = { sw - 125.0f, sh - 125.0f };
+        centroBtnAgachar = { sw - 265.0f, sh - 95.0f };
+        btnCamera = { sw - 170.0f, 20.0f, 150.0f, 44.0f };
+        Rectangle btnMenuHud = { sw - 335.0f, 20.0f, 150.0f, 44.0f };
+
+        if (estadoAtual != TELA_JOGANDO) {
+            BeginDrawing();
+            ClearBackground(Color{ 14, 18, 22, 255 });
+            Vector2 toque = GetMousePosition();
+            bool clicou = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+            DrawRectangleLinesEx(Rectangle{ 20, 20, sw - 40, sh - 40 }, 2, Color{ 45, 180, 110, 180 });
+            const char* titulo = "SHADOW PROTOCOL 3D";
+            DrawText(titulo, (int)(sw/2 - MeasureText(titulo, 36)/2), 65, 36, Color{ 80, 235, 150, 255 });
+
+            if (estadoAtual == TELA_LAUNCHER) {
+                Rectangle rJogar = { sw/2 - 160, sh/2 - 55, 320, 62 };
+                Rectangle rOpcoes = { sw/2 - 160, sh/2 + 25, 320, 62 };
+
+                DrawRectangleRounded(rJogar, 0.25f, 8, Color{ 35, 130, 80, 255 });
+                DrawRectangleRoundedLinesEx(rJogar, 0.25f, 8, 2, WHITE);
+                DrawText("JOGAR", (int)(rJogar.x + 160 - MeasureText("JOGAR", 28)/2), (int)(rJogar.y + 17), 28, WHITE);
+
+                DrawRectangleRounded(rOpcoes, 0.25f, 8, Color{ 35, 48, 58, 255 });
+                DrawRectangleRoundedLinesEx(rOpcoes, 0.25f, 8, 2, Color{ 120, 190, 160, 255 });
+                DrawText("OPCOES", (int)(rOpcoes.x + 160 - MeasureText("OPCOES", 28)/2), (int)(rOpcoes.y + 17), 28, WHITE);
+
+                if (clicou && CheckCollisionPointRec(toque, rJogar)) estadoAtual = TELA_JOGANDO;
+                if (clicou && CheckCollisionPointRec(toque, rOpcoes)) estadoAtual = TELA_OPCOES;
+            } else if (estadoAtual == TELA_OPCOES) {
+                Rectangle rGfx = { sw/2 - 220, 145, 440, 52 };
+                Rectangle rFps = { sw/2 - 220, 210, 440, 52 };
+                Rectangle rSom = { sw/2 - 220, 275, 440, 52 };
+                Rectangle rShowFps = { sw/2 - 220, 340, 440, 52 };
+                Rectangle rVoltar = { sw/2 - 140, sh - 105, 280, 55 };
+
+                const char* txtGfx = optLanterna ? "GRAFICOS: ALTO (LANTERNA)" : "GRAFICOS: BAIXO (RAPIDO)";
+                const char* txtFps = (optFps == 60) ? "LIMITE DE FPS: 60 FPS" : "LIMITE DE FPS: 30 FPS";
+                const char* txtSom = optSom ? "SOM: LIGADO" : "SOM: MUDO";
+                const char* txtShow = optMostrarFps ? "CONTADOR FPS: VISIVEL" : "CONTADOR FPS: OCULTO";
+
+                DrawRectangleRounded(rGfx, 0.2f, 8, Color{ 30, 40, 48, 255 });
+                DrawText(txtGfx, (int)(rGfx.x + 220 - MeasureText(txtGfx, 22)/2), (int)(rGfx.y + 15), 22, WHITE);
+
+                DrawRectangleRounded(rFps, 0.2f, 8, Color{ 30, 40, 48, 255 });
+                DrawText(txtFps, (int)(rFps.x + 220 - MeasureText(txtFps, 22)/2), (int)(rFps.y + 15), 22, WHITE);
+
+                DrawRectangleRounded(rSom, 0.2f, 8, Color{ 30, 40, 48, 255 });
+                DrawText(txtSom, (int)(rSom.x + 220 - MeasureText(txtSom, 22)/2), (int)(rSom.y + 15), 22, WHITE);
+
+                DrawRectangleRounded(rShowFps, 0.2f, 8, Color{ 30, 40, 48, 255 });
+                DrawText(txtShow, (int)(rShowFps.x + 220 - MeasureText(txtShow, 22)/2), (int)(rShowFps.y + 15), 22, WHITE);
+
+                DrawRectangleRounded(rVoltar, 0.25f, 8, Color{ 35, 130, 80, 255 });
+                DrawText("VOLTAR", (int)(rVoltar.x + 140 - MeasureText("VOLTAR", 24)/2), (int)(rVoltar.y + 15), 24, WHITE);
+
+                if (clicou) {
+                    if (CheckCollisionPointRec(toque, rGfx)) optLanterna = !optLanterna;
+                    if (CheckCollisionPointRec(toque, rFps)) { optFps = (optFps == 30) ? 60 : 30; SetTargetFPS(optFps); }
+                    if (CheckCollisionPointRec(toque, rSom)) { optSom = !optSom; SetMasterVolume(optSom ? 1.0f : 0.0f); }
+                    if (CheckCollisionPointRec(toque, rShowFps)) optMostrarFps = !optMostrarFps;
+                    if (CheckCollisionPointRec(toque, rVoltar)) estadoAtual = TELA_LAUNCHER;
+                }
+            }
+                    DrawRectangleRounded(btnMenuHud, 0.25f, 8, Color{ 35, 45, 55, 220 });
+        DrawRectangleRoundedLinesEx(btnMenuHud, 0.25f, 8, 2, Color{ 90, 220, 150, 255 });
+        DrawText("MENU", (int)(btnMenuHud.x + 75 - MeasureText("MENU", 20)/2), (int)(btnMenuHud.y + 12), 20, WHITE);
+        EndDrawing();
+            continue;
+        }
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), btnMenuHud)) {
+            estadoAtual = TELA_LAUNCHER;
+        }
+
         Vector3 posAnterior = posSnake;
         bool moveCima = false, moveBaixo = false, moveEsq = false, moveDir = false;
 
@@ -674,7 +758,7 @@ int main() {
 
             
                                 BeginMode3D(camera);
-            BeginShaderMode(shaderConsole);
+            if (optLanterna) BeginShaderMode(shaderConsole);
                 DrawModel(modChao, { 0.0f, 0.0f, 0.0f }, 1.0f, WHITE);
                             DrawModel(modParedeFundo, { 0.0f, 2.5f, -11.35f }, 1.0f, WHITE);
             DrawModel(modParedeLat, { -11.35f, 2.5f, 0.0f }, 1.0f, WHITE);
@@ -700,7 +784,7 @@ int main() {
         // Visor e macaneta
         DrawCube({ posPorta.x, 2.15f, -10.85f }, 0.75f, 0.55f, 0.04f, Color{ 45, 75, 90, 255 });
         DrawCube({ posPorta.x + 0.75f, 1.45f, -10.83f }, 0.10f, 0.28f, 0.08f, Color{ 190, 200, 210, 255 });
-        EndShaderMode();
+        if (optLanterna) EndShaderMode();
 
         // Placa luminosa "SAIDA" em vermelho suave (brilha no escuro!)
         Vector3 posPlacaSaida = { posPorta.x, 3.55f, -10.88f };
@@ -849,7 +933,7 @@ int main() {
         DrawRectangleRounded(Rectangle{ 16, 94, 92, 24 }, 0.2f, 6, hudFundo);
         DrawRectangleLinesEx(Rectangle{ 16, 94, 92, 24 }, 1, hudBorda);
         DrawText("FPS", 24, 101, 10, hudVerde);
-        DrawFPS(56, 98);
+        if (optMostrarFps) DrawFPS(56, 98);
         // Texto "SAIDA" em vermelho suave projetado sobre a placa da porta
         Vector2 telaSaida = GetWorldToScreen({ 8.5f, 3.55f, -10.98f }, camera);
                 float dxP = camera.position.x - 8.5f;
