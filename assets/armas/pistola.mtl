@@ -1,0 +1,13 @@
+# File produced by Open Asset Import Library (https://www.assimp.org)
+# (assimp v6.0.0)
+
+newmtl Pistol_01_MI
+Kd 0.800000012 0.800000012 0.800000012
+Ka 0 0 0
+Ks 0.800000012 0.800000012 0.800000012
+Ke 0 0 0
+Tf 0 0 0
+d 1
+illum 1
+map_Kd Texture\Pistol_01_Albedo.png
+

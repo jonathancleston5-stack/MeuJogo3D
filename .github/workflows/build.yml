@@ -1,0 +1,79 @@
+name: Compilar APK Raylib Android
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar codigo do jogo
+        uses: actions/checkout@v4
+
+      - name: Instalar ferramentas Android e Java
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar NDK e Build-Tools
+        run: |
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
+
+      - name: Baixar e compilar Raylib para Android (ARM64)
+        run: |
+          git clone --depth 1 https://github.com
+          cd raylib/src
+          NDK_BIN=$ANDROID_HOME/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/bin
+          SYSROOT=$ANDROID_HOME/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/sysroot
+          CC=$NDK_BIN/aarch64-linux-android24-clang
+          AR=$NDK_BIN/llvm-ar
+          for f in rcore rshapes rtextures rtext rmodels utils raudio rglfw; do
+            if [ -f "$f.c" ]; then
+              $CC -c $f.c -o $f.o -O2 -DPLATFORM_ANDROID -DGRAPHICS_API_OPENGL_ES2 -I. -Iexternal/glfw/include -I$SYSROOT/usr/include -I$ANDROID_HOME/ndk/25.2.9519653/sources/android/native_app_glue
+            fi
+          done
+          $CC -c $ANDROID_HOME/ndk/25.2.9519653/sources/android/native_app_glue/android_native_app_glue.c -o native_app_glue.o -O2 -I$ANDROID_HOME/ndk/25.2.9519653/sources/android/native_app_glue
+          $AR rcs libraylib.a *.o
+
+      - name: Empacotar APK com assets
+        run: |
+          mkdir -p apk_build/lib/arm64-v8a apk_build/assets
+          cp -r assets/* apk_build/assets/ 2>/dev/null || true
+          NDK_BIN=$ANDROID_HOME/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/bin
+          CXX=$NDK_BIN/aarch64-linux-android24-clang++
+          $CXX -shared -o apk_build/lib/arm64-v8a/libmain.so main.cpp raylib/src/libraylib.a -O2 -std=c++17 -DPLATFORM_ANDROID -DGRAPHICS_API_OPENGL_ES2 -Iraylib/src -I$ANDROID_HOME/ndk/25.2.9519653/sources/android/native_app_glue -llog -landroid -lEGL -lGLESv2 -lOpenSLES -lm -u ANativeActivity_onCreate
+
+          cat << 'XML' > AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://android.com"
+              package="com.jonathan.meujogo3d" android:versionCode="1" android:versionName="1.0">
+              <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="33" />
+              <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+              <application android:label="MeuJogo3D" android:hasCode="false">
+                  <activity android:name="android.app.NativeActivity"
+                      android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+                      android:configChanges="orientation|keyboardHidden|screenSize"
+                      android:screenOrientation="landscape"
+                      android:exported="true">
+                      <meta-data android:name="android.app.lib_name" android:value="main" />
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          XML
+
+          BUILD_TOOLS=$ANDROID_HOME/build-tools/33.0.2
+          PLATFORM=$ANDROID_HOME/platforms/android-33/android.jar
+          $BUILD_TOOLS/aapt package -f -M AndroidManifest.xml -I $PLATFORM -A apk_build/assets -F app_unaligned.apk apk_build
+          $BUILD_TOOLS/zipalign -f 4 app_unaligned.apk app_aligned.apk
+          keytool -genkeypair -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+          $BUILD_TOOLS/apksigner sign --ks debug.keystore --ks-pass pass:android --out MeuJogo3D.apk app_aligned.apk
+
+      - name: Disponibilizar APK para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeuJogo3D-APK
+          path: MeuJogo3D.apk
