@@ -102,9 +102,6 @@ Model modPistola = { 0 };
     offsetYHeroi = -bbHeroi.min.y * escalaHeroi;
 Model modRifle   = { 0 };
 
-Model modHeroi;
-float escalaHeroi = 1.0f;
-float offsetYHeroi = 0.0f;
 
 void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool ehJogador, bool vivo, bool alerta) {
     float balancoPasso = (cicloPasso > 0.0f) ? std::abs(std::sin(cicloPasso)) * 0.05f : 0.0f;
