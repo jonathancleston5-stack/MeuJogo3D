@@ -95,11 +95,11 @@ Sound criarSomAK47() {
     return s;
 }
 Model modPistola = { 0 };
-    modHeroi = LoadModel("heroi.glb");
-    BoundingBox bbHeroi = GetModelBoundingBox(modHeroi);
-    float altHeroi = bbHeroi.max.y - bbHeroi.min.y;
-    escalaHeroi = (altHeroi > 0.01f) ? (1.75f / altHeroi) : 1.0f;
-    offsetYHeroi = -bbHeroi.min.y * escalaHeroi;
+    
+    
+    
+    
+    
 Model modRifle   = { 0 };
 
 
@@ -255,6 +255,7 @@ int main() {
     SetConfigFlags(FLAG_FULLSCREEN_MODE); 
     InitWindow(0, 0, "Novo Metal Gear - IA Tatica");
     InitAudioDevice();
+    modHeroi = LoadModel("heroi.glb"); BoundingBox bb = GetModelBoundingBox(modHeroi); float ah = bb.max.y - bb.min.y; escalaHeroi = (ah > 0.01f) ? (1.75f / ah) : 1.0f; offsetYHeroi = -bb.min.y * escalaHeroi;
     SetTargetFPS(30);
 
     Texture2D texCimento = gerarTexturaCimento();
