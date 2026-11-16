@@ -97,20 +97,79 @@ Sound criarSomAK47() {
 Model modPistola = { 0 };
 Model modRifle   = { 0 };
 
-Model modHeroi, modHeroiW1, modHeroiW2;
-float escalaHeroi = 1.0f;
-float offsetYHeroi = 0.0f;
-
 void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool ehJogador, bool vivo, bool alerta) {
-    float passoVertical = (cicloPasso > 0.0f) ? std::abs(std::sin(cicloPasso)) * 0.045f : std::sin((float)GetTime() * 2.2f) * 0.008f;
-    float balancoLateral = (cicloPasso > 0.0f) ? std::sin(cicloPasso) * 2.2f : 0.0f;
-    float inclinacaoFrente = (cicloPasso > 0.0f) ? 3.5f : 0.0f;
     rlPushMatrix();
-        rlTranslatef(pos.x, pos.y + offsetYHeroi + passoVertical, pos.z);
+        rlTranslatef(pos.x, pos.y, pos.z);
         rlRotatef(angulo, 0.0f, 1.0f, 0.0f);
-        rlRotatef(balancoLateral, 0.0f, 0.0f, 1.0f);
-        rlRotatef(inclinacaoFrente, 1.0f, 0.0f, 0.0f);
-        DrawModel(modHeroi, Vector3{ 0.0f, 0.0f, 0.0f }, escalaHeroi, WHITE);
+
+        Color corJaqueta   = { 48, 62, 74, 255 };    // Jaqueta azul-acinzentada (estilo Harry Mason)
+        Color corCamiseta  = { 210, 212, 208, 255 }; // Camiseta branca por baixo
+        Color corJeans     = { 32, 44, 68, 255 };    // Calca jeans escura
+        Color corPele      = { 215, 178, 148, 255 }; // Rosto e maos
+        Color corCabelo    = { 58, 40, 28, 255 };    // Cabelo castanho escuro PS1
+        Color corSapato    = { 38, 28, 22, 255 };    // Botas marrons escuras
+        Color corContorno  = { 12, 14, 18, 255 };
+
+        float balanco = (cicloPasso > 0.0f) ? std::sin(cicloPasso) * 28.0f : 0.0f;
+        float respiracao = (cicloPasso == 0.0f) ? std::sin((float)GetTime() * 2.8f) * 0.015f : 0.0f;
+
+        // --- PERNAS (JEANS) ---
+        rlPushMatrix();
+            rlTranslatef(-0.13f, 0.78f, 0.0f);
+            rlRotatef(balanco, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corJeans);
+            DrawCubeWires({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corContorno);
+            DrawCube({ 0.0f, -0.72f, 0.04f }, 0.20f, 0.14f, 0.28f, corSapato);
+        rlPopMatrix();
+
+        rlPushMatrix();
+            rlTranslatef(0.13f, 0.78f, 0.0f);
+            rlRotatef(-balanco, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corJeans);
+            DrawCubeWires({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corContorno);
+            DrawCube({ 0.0f, -0.72f, 0.04f }, 0.20f, 0.14f, 0.28f, corSapato);
+        rlPopMatrix();
+
+        // --- TORSO (JAQUETA ABERTA + CAMISETA BRANCA + LANTERNA NO BOLSO) ---
+        float yTorso = 1.12f + respiracao;
+        DrawCube({ 0.0f, yTorso, 0.0f }, 0.48f, 0.66f, 0.26f, corJaqueta);
+        DrawCubeWires({ 0.0f, yTorso, 0.0f }, 0.48f, 0.66f, 0.26f, corContorno);
+        // Camiseta branca visivel na frente da jaqueta aberta
+        DrawCube({ 0.0f, yTorso + 0.02f, 0.135f }, 0.16f, 0.60f, 0.02f, corCamiseta);
+        // Gola da jaqueta
+        DrawCube({ -0.14f, yTorso + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
+        DrawCube({  0.14f, yTorso + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
+        // Lanterna presa no bolso esquerdo do peito
+        DrawCube({ -0.15f, yTorso + 0.12f, 0.15f }, 0.07f, 0.16f, 0.07f, Color{ 30, 32, 35, 255 });
+        DrawCube({ -0.15f, yTorso + 0.15f, 0.19f }, 0.06f, 0.06f, 0.02f, Color{ 255, 245, 200, 255 });
+
+        // --- CABECA E CABELO ESTILO PS1 ---
+        float yCabeca = 1.63f + respiracao;
+        DrawCube({ 0.0f, yCabeca, 0.0f }, 0.28f, 0.31f, 0.28f, corPele);
+        DrawCubeWires({ 0.0f, yCabeca, 0.0f }, 0.28f, 0.31f, 0.28f, corContorno);
+        // Cabelo castanho (topo, nuca e costeletas)
+        DrawCube({ 0.0f, yCabeca + 0.13f, -0.01f }, 0.30f, 0.11f, 0.31f, corCabelo);
+        DrawCube({ 0.0f, yCabeca + 0.02f, -0.14f }, 0.30f, 0.26f, 0.06f, corCabelo);
+        DrawCube({ -0.14f, yCabeca + 0.04f, -0.02f }, 0.04f, 0.18f, 0.24f, corCabelo);
+        DrawCube({  0.14f, yCabeca + 0.04f, -0.02f }, 0.04f, 0.18f, 0.24f, corCabelo);
+
+        // --- BRACOS SOLTOS (SEM ARMAS) ---
+        rlPushMatrix();
+            rlTranslatef(-0.31f, yTorso + 0.24f, 0.0f);
+            rlRotatef(-balanco * 0.85f, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corJaqueta);
+            DrawCubeWires({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corContorno);
+            DrawCube({ 0.0f, -0.55f, 0.0f }, 0.12f, 0.12f, 0.13f, corPele);
+        rlPopMatrix();
+
+        rlPushMatrix();
+            rlTranslatef(0.31f, yTorso + 0.24f, 0.0f);
+            rlRotatef(balanco * 0.85f, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corJaqueta);
+            DrawCubeWires({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corContorno);
+            DrawCube({ 0.0f, -0.55f, 0.0f }, 0.12f, 0.12f, 0.13f, corPele);
+        rlPopMatrix();
+
     rlPopMatrix();
 }
 
@@ -255,13 +314,6 @@ int main() {
     SetConfigFlags(FLAG_FULLSCREEN_MODE); 
     InitWindow(0, 0, "Novo Metal Gear - IA Tatica");
     InitAudioDevice();
-    modHeroi = LoadModel("heroi_idle.glb");
-    modHeroiW1 = LoadModel("heroi_w1.glb");
-    modHeroiW2 = LoadModel("heroi_w2.glb");
-    BoundingBox bb = GetModelBoundingBox(modHeroi);
-    float ah = bb.max.y - bb.min.y;
-    escalaHeroi = (ah > 0.01f) ? (1.75f / ah) : 1.0f;
-    offsetYHeroi = -bb.min.y * escalaHeroi;
     SetTargetFPS(30);
 
     Texture2D texCimento = gerarTexturaCimento();
@@ -391,8 +443,8 @@ int main() {
         float sh = (float)GetScreenHeight();
         centroBtnAtirar = { sw - 125.0f, sh - 125.0f };
         centroBtnAgachar = { sw - 115.0f, sh - 105.0f };
-        btnCamera = { -500.0f, -500.0f, 10.0f, 10.0f };
-        Rectangle btnMenuHud = { sw - 170.0f, 20.0f, 150.0f, 44.0f };
+        btnCamera = { sw - 170.0f, 20.0f, 150.0f, 44.0f };
+        Rectangle btnMenuHud = { sw - 335.0f, 20.0f, 150.0f, 44.0f };
 
         if (estadoAtual != TELA_JOGANDO) {
             BeginDrawing();
@@ -576,7 +628,7 @@ int main() {
         }
 
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), btnCamera)) {
-            modoPrimeiraPessoa = false;
+            modoPrimeiraPessoa = !modoPrimeiraPessoa;
         }
 
         float radSnake = anguloSnake * DEG2RAD;
