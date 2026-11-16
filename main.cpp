@@ -174,7 +174,7 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool ehJogad
     rlPopMatrix();
 }
 
-bool pontoBloqueado3D(float x, float z, const std::vector<BoundingBox>& caixas) {
+bool pontoBloqueado3D(float x, float z, caixas) {
     for (const auto& box : caixas) {
         if (x >= box.min.x && x <= box.max.x && z >= box.min.z && z <= box.max.z) return true;
     }
@@ -886,8 +886,8 @@ int main() {
             float passA = (-eixoY) * (agachado ? 2.2f : 4.2f) * dtAna;
             float nxA = posSnake.x + std::sin(radA) * passA;
             float nzA = posSnake.z + std::cos(radA) * passA;
-            if (!pontoBloqueado3D(nxA, posSnake.z, const std::vector<BoundingBox>& caixas)) posSnake.x = nxA;
-            if (!pontoBloqueado3D(posSnake.x, nzA, const std::vector<BoundingBox>& caixas)) posSnake.z = nzA;
+            if (!pontoBloqueado3D(nxA, posSnake.z, caixas)) posSnake.x = nxA;
+            if (!pontoBloqueado3D(posSnake.x, nzA, caixas)) posSnake.z = nzA;
         }
         SetShaderValue(shaderConsole, viewPosLoc, &camera.position, SHADER_UNIFORM_VEC3);
          float radLuz = anguloSnake * DEG2RAD;
