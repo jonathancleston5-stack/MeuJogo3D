@@ -1,3 +1,4 @@
+#include <cstdio>
 #include "raylib.h"
 #include "rlgl.h"
 #include <cmath>
@@ -308,6 +309,34 @@ void DesenharCenarioIndustrial(Vector3 origem = { 0, 0, 0 }) {
 
 
 
+
+const char* caminhoConfig() {
+#ifdef PLATFORM_ANDROID
+    return "/data/data/com.jonathan.meujogo3d/files/config.txt";
+#else
+    return "config.txt";
+#endif
+}
+void salvarConfig(bool lanterna, int fps, bool som, bool showFps, int nivelRes) {
+    FILE* f = std::fopen(caminhoConfig(), "w");
+    if (f) {
+        std::fprintf(f, "%d %d %d %d %d\n", lanterna ? 1 : 0, fps, som ? 1 : 0, showFps ? 1 : 0, nivelRes);
+        std::fclose(f);
+    }
+}
+void carregarConfig(bool &lanterna, int &fps, bool &som, bool &showFps, int &nivelRes) {
+    FILE* f = std::fopen(caminhoConfig(), "r");
+    if (f) {
+        int l = 1, fp = 30, s = 1, sf = 1, nr = 0;
+        if (std::fscanf(f, "%d %d %d %d %d", &l, &fp, &s, &sf, &nr) == 5) {
+            lanterna = (l != 0); fps = (fp == 60) ? 60 : 30;
+            som = (s != 0); showFps = (sf != 0);
+            nivelRes = (nr >= 0 && nr <= 2) ? nr : 0;
+        }
+        std::fclose(f);
+    }
+}
+
 int main() {
     const int LARGURA = 960;
     const int ALTURA = 432;
@@ -437,6 +466,16 @@ int main() {
     int resH = GetScreenHeight();
     RenderTexture2D targetRes = LoadRenderTexture(resW, resH);
     SetTextureFilter(targetRes.texture, TEXTURE_FILTER_BILINEAR);
+    carregarConfig(optLanterna, optFps, optSom, optMostrarFps, optNivelRes);
+    SetTargetFPS(optFps);
+    SetMasterVolume(optSom ? 1.0f : 0.0f);
+    resW = (int)(GetScreenWidth() * escalasRes[optNivelRes]);
+    resH = (int)(GetScreenHeight() * escalasRes[optNivelRes]);
+    if (resW < 320) resW = 320;
+    if (resH < 180) resH = 180;
+    UnloadRenderTexture(targetRes);
+    targetRes = LoadRenderTexture(resW, resH);
+    SetTextureFilter(targetRes.texture, TEXTURE_FILTER_BILINEAR);
 
     while (!WindowShouldClose()) {
         float sw = (float)GetScreenWidth();
@@ -448,67 +487,71 @@ int main() {
 
         if (estadoAtual != TELA_JOGANDO) {
             BeginDrawing();
-            ClearBackground(Color{ 14, 18, 22, 255 });
+            ClearBackground(Color{ 12, 16, 20, 255 });
             Vector2 toque = GetMousePosition();
             bool clicou = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
-            DrawRectangleLinesEx(Rectangle{ 20, 20, sw - 40, sh - 40 }, 2, Color{ 45, 180, 110, 180 });
+            DrawRectangleLinesEx(Rectangle{ 24, 24, sw - 48, sh - 48 }, 3, Color{ 50, 200, 120, 200 });
             const char* titulo = "SHADOW PROTOCOL 3D";
-            DrawText(titulo, (int)(sw/2 - MeasureText(titulo, 36)/2), 65, 36, Color{ 80, 235, 150, 255 });
+            int tw = MeasureText(titulo, 44);
+            DrawText(titulo, (int)(sw/2 - tw/2) + 3, 58, 44, BLACK);
+            DrawText(titulo, (int)(sw/2 - tw/2), 55, 44, Color{ 90, 245, 160, 255 });
 
             if (estadoAtual == TELA_LAUNCHER) {
-                Rectangle rJogar = { sw/2 - 160, sh/2 - 55, 320, 62 };
-                Rectangle rOpcoes = { sw/2 - 160, sh/2 + 25, 320, 62 };
+                Rectangle rJogar = { sw/2 - 200, sh/2 - 70, 400, 76 };
+                Rectangle rOpcoes = { sw/2 - 200, sh/2 + 26, 400, 76 };
 
-                DrawRectangleRounded(rJogar, 0.25f, 8, Color{ 35, 130, 80, 255 });
-                DrawRectangleRoundedLinesEx(rJogar, 0.25f, 8, 2, WHITE);
-                DrawText("JOGAR", (int)(rJogar.x + 160 - MeasureText("JOGAR", 28)/2), (int)(rJogar.y + 17), 28, WHITE);
+                DrawRectangleRounded(rJogar, 0.25f, 10, Color{ 32, 145, 85, 255 });
+                DrawRectangleRoundedLinesEx(rJogar, 0.25f, 10, 3, WHITE);
+                DrawText("JOGAR", (int)(rJogar.x + 200 - MeasureText("JOGAR", 34)/2) + 2, (int)(rJogar.y + 23), 34, BLACK);
+                DrawText("JOGAR", (int)(rJogar.x + 200 - MeasureText("JOGAR", 34)/2), (int)(rJogar.y + 21), 34, WHITE);
 
-                DrawRectangleRounded(rOpcoes, 0.25f, 8, Color{ 35, 48, 58, 255 });
-                DrawRectangleRoundedLinesEx(rOpcoes, 0.25f, 8, 2, Color{ 120, 190, 160, 255 });
-                DrawText("OPCOES", (int)(rOpcoes.x + 160 - MeasureText("OPCOES", 28)/2), (int)(rOpcoes.y + 17), 28, WHITE);
+                DrawRectangleRounded(rOpcoes, 0.25f, 10, Color{ 36, 48, 60, 255 });
+                DrawRectangleRoundedLinesEx(rOpcoes, 0.25f, 10, 3, Color{ 130, 210, 175, 255 });
+                DrawText("OPCOES", (int)(rOpcoes.x + 200 - MeasureText("OPCOES", 34)/2) + 2, (int)(rOpcoes.y + 23), 34, BLACK);
+                DrawText("OPCOES", (int)(rOpcoes.x + 200 - MeasureText("OPCOES", 34)/2), (int)(rOpcoes.y + 21), 34, WHITE);
 
                 if (clicou && CheckCollisionPointRec(toque, rJogar)) estadoAtual = TELA_JOGANDO;
                 if (clicou && CheckCollisionPointRec(toque, rOpcoes)) estadoAtual = TELA_OPCOES;
             } else if (estadoAtual == TELA_OPCOES) {
-                Rectangle rGfx = { sw/2 - 220, 145, 440, 52 };
-                Rectangle rFps = { sw/2 - 220, 210, 440, 52 };
-                Rectangle rSom = { sw/2 - 220, 275, 440, 52 };
-                Rectangle rShowFps = { sw/2 - 220, 340, 440, 52 };
-                Rectangle rRes = { sw/2 - 220, 405, 440, 52 };
-                Rectangle rVoltar = { sw/2 - 140, sh - 105, 280, 55 };
+                float bw = 560.0f, bh = 58.0f, bx = sw/2 - bw/2;
+                Rectangle rGfx = { bx, 125, bw, bh };
+                Rectangle rFps = { bx, 193, bw, bh };
+                Rectangle rSom = { bx, 261, bw, bh };
+                Rectangle rShowFps = { bx, 329, bw, bh };
+                Rectangle rRes = { bx, 397, bw, bh };
+                Rectangle rVoltar = { sw/2 - 180, sh - 102, 360, 64 };
 
-                const char* txtGfx = optLanterna ? "GRAFICOS: ALTO (LANTERNA)" : "GRAFICOS: BAIXO (RAPIDO)";
+                const char* txtGfx = optLanterna ? "GRAFICOS: ALTO (LANTERNA + NEVOA)" : "GRAFICOS: BAIXO (MODO RAPIDO)";
                 const char* txtFps = (optFps == 60) ? "LIMITE DE FPS: 60 FPS" : "LIMITE DE FPS: 30 FPS";
                 const char* txtSom = optSom ? "SOM: LIGADO" : "SOM: MUDO";
                 const char* txtShow = optMostrarFps ? "CONTADOR FPS: VISIVEL" : "CONTADOR FPS: OCULTO";
-                char txtRes[64];
-                const char* nomeRes[3] = { "100% (NATIVA)", "75% (ALTA)", "50% (720P PS2)" };
+                char txtRes;
+                const char* nomeRes = { "100% (NATIVA)", "75% (ALTA)", "50% (720P PS2)" };
                 sprintf(txtRes, "RESOLUCAO 3D: %s (%dx%d)", nomeRes[optNivelRes], resW, resH);
 
-                DrawRectangleRounded(rGfx, 0.2f, 8, Color{ 30, 40, 48, 255 });
-                DrawText(txtGfx, (int)(rGfx.x + 220 - MeasureText(txtGfx, 22)/2), (int)(rGfx.y + 15), 22, WHITE);
+                Rectangle botoes = { rGfx, rFps, rSom, rShowFps, rRes };
+                const char* textos = { txtGfx, txtFps, txtSom, txtShow, txtRes };
+                for (int i = 0; i < 5; i++) {
+                    DrawRectangleRounded(botoes[i], 0.22f, 8, Color{ 30, 42, 52, 255 });
+                    DrawRectangleRoundedLinesEx(botoes[i], 0.22f, 8, 2, Color{ 95, 165, 140, 220 });
+                    int fsize = (i == 4) ? 23 : 25;
+                    int tx = (int)(botoes[i].x + bw/2 - MeasureText(textos[i], fsize)/2);
+                    int ty = (int)(botoes[i].y + (bh - fsize)/2);
+                    DrawText(textos[i], tx + 2, ty + 2, fsize, BLACK);
+                    DrawText(textos[i], tx, ty, fsize, (i == 4) ? Color{ 110, 245, 180, 255 } : WHITE);
+                }
 
-                DrawRectangleRounded(rFps, 0.2f, 8, Color{ 30, 40, 48, 255 });
-                DrawText(txtFps, (int)(rFps.x + 220 - MeasureText(txtFps, 22)/2), (int)(rFps.y + 15), 22, WHITE);
-
-                DrawRectangleRounded(rSom, 0.2f, 8, Color{ 30, 40, 48, 255 });
-                DrawText(txtSom, (int)(rSom.x + 220 - MeasureText(txtSom, 22)/2), (int)(rSom.y + 15), 22, WHITE);
-
-                DrawRectangleRounded(rShowFps, 0.2f, 8, Color{ 30, 40, 48, 255 });
-                DrawText(txtShow, (int)(rShowFps.x + 220 - MeasureText(txtShow, 22)/2), (int)(rShowFps.y + 15), 22, WHITE);
-
-                DrawRectangleRounded(rRes, 0.2f, 8, Color{ 30, 40, 48, 255 });
-                DrawText(txtRes, (int)(rRes.x + 220 - MeasureText(txtRes, 20)/2), (int)(rRes.y + 16), 20, Color{ 100, 230, 170, 255 });
-
-                DrawRectangleRounded(rVoltar, 0.25f, 8, Color{ 35, 130, 80, 255 });
-                DrawText("VOLTAR", (int)(rVoltar.x + 140 - MeasureText("VOLTAR", 24)/2), (int)(rVoltar.y + 15), 24, WHITE);
+                DrawRectangleRounded(rVoltar, 0.25f, 10, Color{ 32, 145, 85, 255 });
+                DrawRectangleRoundedLinesEx(rVoltar, 0.25f, 10, 3, WHITE);
+                DrawText("SALVAR E VOLTAR", (int)(rVoltar.x + 180 - MeasureText("SALVAR E VOLTAR", 26)/2), (int)(rVoltar.y + 19), 26, WHITE);
 
                 if (clicou) {
-                    if (CheckCollisionPointRec(toque, rGfx)) optLanterna = !optLanterna;
-                    if (CheckCollisionPointRec(toque, rFps)) { optFps = (optFps == 30) ? 60 : 30; SetTargetFPS(optFps); }
-                    if (CheckCollisionPointRec(toque, rSom)) { optSom = !optSom; SetMasterVolume(optSom ? 1.0f : 0.0f); }
-                    if (CheckCollisionPointRec(toque, rShowFps)) optMostrarFps = !optMostrarFps;
+                    bool mudou = false;
+                    if (CheckCollisionPointRec(toque, rGfx)) { optLanterna = !optLanterna; mudou = true; }
+                    if (CheckCollisionPointRec(toque, rFps)) { optFps = (optFps == 30) ? 60 : 30; SetTargetFPS(optFps); mudou = true; }
+                    if (CheckCollisionPointRec(toque, rSom)) { optSom = !optSom; SetMasterVolume(optSom ? 1.0f : 0.0f); mudou = true; }
+                    if (CheckCollisionPointRec(toque, rShowFps)) { optMostrarFps = !optMostrarFps; mudou = true; }
                     if (CheckCollisionPointRec(toque, rRes)) {
                         optNivelRes = (optNivelRes + 1) % 3;
                         resW = (int)(GetScreenWidth() * escalasRes[optNivelRes]);
@@ -518,16 +561,16 @@ int main() {
                         UnloadRenderTexture(targetRes);
                         targetRes = LoadRenderTexture(resW, resH);
                         SetTextureFilter(targetRes.texture, TEXTURE_FILTER_BILINEAR);
+                        mudou = true;
                     }
-                    if (CheckCollisionPointRec(toque, rVoltar)) estadoAtual = TELA_LAUNCHER;
+                    if (mudou) salvarConfig(optLanterna, optFps, optSom, optMostrarFps, optNivelRes);
+                    if (CheckCollisionPointRec(toque, rVoltar)) {
+                        salvarConfig(optLanterna, optFps, optSom, optMostrarFps, optNivelRes);
+                        estadoAtual = TELA_LAUNCHER;
+                    }
                 }
             }
-                    if (estadoAtual == TELA_JOGANDO) {
-        DrawRectangleRounded(btnMenuHud, 0.25f, 8, Color{ 35, 45, 55, 220 });
-        DrawRectangleRoundedLinesEx(btnMenuHud, 0.25f, 8, 2, Color{ 90, 220, 150, 255 });
-        DrawText("MENU", (int)(btnMenuHud.x + 75 - MeasureText("MENU", 20)/2), (int)(btnMenuHud.y + 12), 20, WHITE);
-        }
-        EndDrawing();
+            EndDrawing();
             continue;
         }
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), btnMenuHud)) {
