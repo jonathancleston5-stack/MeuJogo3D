@@ -995,27 +995,26 @@ int main() {
         DrawRectangleLines(28, 55, 196, 18, hudBorda);
 
         // BOTÕES DIRECIONAIS ESTILIZADOS (4 SETAS)
-        DrawRectangleRounded(btnCima, 0.25f, 8, hudFundo);
-        DrawRectangleLinesEx(btnCima, 2, hudBorda);
-        DrawText("^", (int)(btnCima.x + btnCima.width / 2 - 7), (int)(btnCima.y + btnCima.height / 2 - 12), 26, hudTexto);
+        // ANALOGICO XBOX (ESQUERDA)
+        DrawCircleV(baseAnalogico, raioBaseAnalogico, Color{ 20, 26, 32, 185 });
+        DrawCircleLines((int)baseAnalogico.x, (int)baseAnalogico.y, raioBaseAnalogico, Color{ 100, 125, 145, 230 });
+        DrawCircleV(pinoAnalogico, 50.0f, Color{ 58, 68, 78, 240 });
+        DrawCircleLines((int)pinoAnalogico.x, (int)pinoAnalogico.y, 50.0f, Color{ 170, 195, 210, 245 });
+        DrawCircleV(pinoAnalogico, 24.0f, Color{ 36, 42, 50, 245 });
 
-        DrawRectangleRounded(btnBaixo, 0.25f, 8, hudFundo);
-        DrawRectangleLinesEx(btnBaixo, 2, hudBorda);
-        DrawText("v", (int)(btnBaixo.x + btnBaixo.width / 2 - 7), (int)(btnBaixo.y + btnBaixo.height / 2 - 15), 26, hudTexto);
-
-        DrawRectangleRounded(btnEsquerda, 0.25f, 8, hudFundo);
-        DrawRectangleLinesEx(btnEsquerda, 2, hudBorda);
-        DrawText("<", (int)(btnEsquerda.x + btnEsquerda.width / 2 - 7), (int)(btnEsquerda.y + btnEsquerda.height / 2 - 15), 26, hudTexto);
-
-        DrawRectangleRounded(btnDireita, 0.25f, 8, hudFundo);
-        DrawRectangleLinesEx(btnDireita, 2, hudBorda);
-        DrawText(">", (int)(btnDireita.x + btnDireita.width / 2 - 7), (int)(btnDireita.y + btnDireita.height / 2 - 15), 26, hudTexto);
-
-        // BOTÃO AGACHAR (CROUCH)
-        DrawCircleV(centroBtnAgachar, raioBtnAgachar, agachado ? hudVerde : hudFundo);
-        DrawCircleLines((int)centroBtnAgachar.x, (int)centroBtnAgachar.y, raioBtnAgachar, hudBorda);
-        DrawCircleLines((int)centroBtnAgachar.x, (int)centroBtnAgachar.y, raioBtnAgachar - 4, hudVerde);
-        DrawText("CROUCH", (int)(centroBtnAgachar.x - MeasureText("CROUCH", 12) / 2), (int)(centroBtnAgachar.y - 6), 12, agachado ? BLACK : hudTexto);
+        // BOTOES A, X, B, Y XBOX (DIREITA)
+        auto btnXbox = [&](Vector2 c, const char* txt, Color cor, bool on) {
+            DrawCircleV(c, raioBtnXbox, Color{ 14, 18, 22, 220 });
+            DrawCircleV(c, raioBtnXbox - 4.0f, on ? WHITE : Color{ cor.r, cor.g, cor.b, 220 });
+            DrawCircleLines((int)c.x, (int)c.y, raioBtnXbox, Color{ 220, 230, 240, 230 });
+            int lw = MeasureText(txt, 32);
+            DrawText(txt, (int)c.x - lw/2 + 1, (int)c.y - 15, 32, BLACK);
+            DrawText(txt, (int)c.x - lw/2, (int)c.y - 16, 32, on ? BLACK : WHITE);
+        };
+        btnXbox(posBtnA, "A", Color{ 46, 180, 75, 255 }, btnAPress);
+        btnXbox(posBtnB, "B", Color{ 210, 52, 52, 255 }, btnBPress);
+        btnXbox(posBtnX, "X", Color{ 48, 125, 220, 255 }, btnXPress);
+        btnXbox(posBtnY, "Y", Color{ 230, 180, 35, 255 }, btnYPress);
 
         // CONTADOR DE FPS ESTILIZADO
         DrawRectangleRounded(Rectangle{ 16, 94, 92, 24 }, 0.2f, 6, hudFundo);
