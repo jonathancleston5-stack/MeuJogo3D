@@ -14,11 +14,7 @@ jobs:
           NDK=$ANDROID_HOME/ndk/25.2.9519653
           BIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
           GLUE=$NDK/sources/android/native_app_glue
-          for f in rcore rshapes rtextures rtext rmodels utils raudio; do
-            [ -f "$f.c" ] && $BIN/aarch64-linux-android24-clang -c $f.c -o $f.o -O2 -DPLATFORM_ANDROID -DGRAPHICS_API_OPENGL_ES2 -I. -Iexternal/glfw/include -I$GLUE
-          done
-          $BIN/aarch64-linux-android24-clang -c $GLUE/android_native_app_glue.c -o glue.o -O2 -I$GLUE
-          $BIN/llvm-ar rcs libraylib.a *.o
+          make PLATFORM=PLATFORM_ANDROID ANDROID_NDK=$NDK ANDROID_ARCH=arm64 ANDROID_API_VERSION=24 -j4
       - name: Empacotar APK
         run: |
           mkdir -p apk/lib/arm64-v8a apk/assets
