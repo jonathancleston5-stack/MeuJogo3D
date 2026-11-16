@@ -879,15 +879,15 @@ int main() {
         camera.up = { 0.0f, 1.0f, 0.0f };
         camera.fovy = 52.0f;
 
-                if (std::abs(eixoX) > 0.15f) anguloSnake -= eixoX * 140.0f * dt;
+                float dtAna = GetFrameTime();
+        if (std::abs(eixoX) > 0.15f) anguloSnake -= eixoX * 140.0f * dtAna;
         if (std::abs(eixoY) > 0.15f) {
             float radA = anguloSnake * DEG2RAD;
-            float passA = (-eixoY) * (agachado ? 2.2f : 4.2f) * dt;
+            float passA = (-eixoY) * (agachado ? 2.2f : 4.2f) * dtAna;
             float nxA = posSnake.x + std::sin(radA) * passA;
             float nzA = posSnake.z + std::cos(radA) * passA;
-            if (!pontoBloqueado3D(nxA, posSnake.z, 0.35f)) posSnake.x = nxA;
-            if (!pontoBloqueado3D(posSnake.x, nzA, 0.35f)) posSnake.z = nzA;
-            cicloPasso += std::abs(eixoY) * 10.0f * dt;
+            if (!pontoBloqueado3D(nxA, posSnake.z, const std::vector<BoundingBox>& caixas)) posSnake.x = nxA;
+            if (!pontoBloqueado3D(posSnake.x, nzA, const std::vector<BoundingBox>& caixas)) posSnake.z = nzA;
         }
         SetShaderValue(shaderConsole, viewPosLoc, &camera.position, SHADER_UNIFORM_VEC3);
          float radLuz = anguloSnake * DEG2RAD;
