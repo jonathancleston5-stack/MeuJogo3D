@@ -485,6 +485,55 @@ int main() {
         btnCamera = { sw - 170.0f, 20.0f, 150.0f, 44.0f };
         Rectangle btnMenuHud = { sw - 335.0f, 20.0f, 150.0f, 44.0f };
 
+        Vector2 baseAnalogico = { 185.0f, sh - 185.0f };
+        float raioBaseAnalogico = 120.0f;
+        Vector2 pinoAnalogico = baseAnalogico;
+        float eixoX = 0.0f, eixoY = 0.0f;
+
+        Vector2 posBtnA = { sw - 195.0f, sh - 110.0f };
+        Vector2 posBtnB = { sw - 110.0f, sh - 195.0f };
+        Vector2 posBtnX = { sw - 280.0f, sh - 195.0f };
+        Vector2 posBtnY = { sw - 195.0f, sh - 280.0f };
+        float raioBtnXbox = 45.0f;
+
+        bool btnAPress = false, btnBPress = false, btnXPress = false, btnYPress = false;
+        if (estadoAtual == TELA_JOGANDO) {
+            int tc = GetTouchPointCount();
+            if (tc > 0) {
+                for (int t = 0; t < tc; t++) {
+                    Vector2 tp = GetTouchPosition(t);
+                    float d = std::hypot(tp.x - baseAnalogico.x, tp.y - baseAnalogico.y);
+                    if (d < raioBaseAnalogico * 1.7f && tp.x < sw * 0.45f) {
+                        float dx = tp.x - baseAnalogico.x, dy = tp.y - baseAnalogico.y;
+                        if (d > raioBaseAnalogico) { dx = (dx/d)*raioBaseAnalogico; dy = (dy/d)*raioBaseAnalogico; }
+                        pinoAnalogico = { baseAnalogico.x + dx, baseAnalogico.y + dy };
+                        eixoX = dx / raioBaseAnalogico; eixoY = dy / raioBaseAnalogico;
+                    }
+                    if (CheckCollisionPointCircle(tp, posBtnA, raioBtnXbox * 1.2f)) btnAPress = true;
+                    if (CheckCollisionPointCircle(tp, posBtnB, raioBtnXbox * 1.2f)) btnBPress = true;
+                    if (CheckCollisionPointCircle(tp, posBtnX, raioBtnXbox * 1.2f)) btnXPress = true;
+                    if (CheckCollisionPointCircle(tp, posBtnY, raioBtnXbox * 1.2f)) btnYPress = true;
+                }
+            } else if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+                Vector2 mp = GetMousePosition();
+                float d = std::hypot(mp.x - baseAnalogico.x, mp.y - baseAnalogico.y);
+                if (d < raioBaseAnalogico * 1.7f && mp.x < sw * 0.45f) {
+                    float dx = mp.x - baseAnalogico.x, dy = mp.y - baseAnalogico.y;
+                    if (d > raioBaseAnalogico) { dx = (dx/d)*raioBaseAnalogico; dy = (dy/d)*raioBaseAnalogico; }
+                    pinoAnalogico = { baseAnalogico.x + dx, baseAnalogico.y + dy };
+                    eixoX = dx / raioBaseAnalogico; eixoY = dy / raioBaseAnalogico;
+                }
+                if (CheckCollisionPointCircle(mp, posBtnA, raioBtnXbox * 1.2f)) btnAPress = true;
+                if (CheckCollisionPointCircle(mp, posBtnB, raioBtnXbox * 1.2f)) btnBPress = true;
+                if (CheckCollisionPointCircle(mp, posBtnX, raioBtnXbox * 1.2f)) btnXPress = true;
+                if (CheckCollisionPointCircle(mp, posBtnY, raioBtnXbox * 1.2f)) btnYPress = true;
+            }
+            static bool bAnt = false;
+            if (btnBPress && !bAnt) agachado = !agachado;
+            bAnt = btnBPress;
+        }
+
+
         if (estadoAtual != TELA_JOGANDO) {
             BeginDrawing();
             ClearBackground(Color{ 12, 16, 20, 255 });
@@ -830,6 +879,16 @@ int main() {
         camera.up = { 0.0f, 1.0f, 0.0f };
         camera.fovy = 52.0f;
 
+                if (std::abs(eixoX) > 0.15f) anguloSnake -= eixoX * 140.0f * dt;
+        if (std::abs(eixoY) > 0.15f) {
+            float radA = anguloSnake * DEG2RAD;
+            float passA = (-eixoY) * (agachado ? 2.2f : 4.2f) * dt;
+            float nxA = posSnake.x + std::sin(radA) * passA;
+            float nzA = posSnake.z + std::cos(radA) * passA;
+            if (!pontoBloqueado3D(nxA, posSnake.z, 0.35f)) posSnake.x = nxA;
+            if (!pontoBloqueado3D(posSnake.x, nzA, 0.35f)) posSnake.z = nzA;
+            cicloPasso += std::abs(eixoY) * 10.0f * dt;
+        }
         SetShaderValue(shaderConsole, viewPosLoc, &camera.position, SHADER_UNIFORM_VEC3);
          float radLuz = anguloSnake * DEG2RAD;
         float alturaLuz = agachado ? 0.85f : 1.35f;
