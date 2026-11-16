@@ -443,6 +443,12 @@ int main() {
     int optFps = 30;
     bool optSom = true;
     bool optMostrarFps = true;
+    int optNivelRes = 0; // 0 = 100% Nativa, 1 = 75% (1080p), 2 = 50% (720p)
+    float escalasRes[3] = { 1.0f, 0.75f, 0.50f };
+    int resW = GetScreenWidth();
+    int resH = GetScreenHeight();
+    RenderTexture2D targetRes = LoadRenderTexture(resW, resH);
+    SetTextureFilter(targetRes.texture, TEXTURE_FILTER_BILINEAR);
 
     while (!WindowShouldClose()) {
         float sw = (float)GetScreenWidth();
@@ -481,12 +487,16 @@ int main() {
                 Rectangle rFps = { sw/2 - 220, 210, 440, 52 };
                 Rectangle rSom = { sw/2 - 220, 275, 440, 52 };
                 Rectangle rShowFps = { sw/2 - 220, 340, 440, 52 };
+                Rectangle rRes = { sw/2 - 220, 405, 440, 52 };
                 Rectangle rVoltar = { sw/2 - 140, sh - 105, 280, 55 };
 
                 const char* txtGfx = optLanterna ? "GRAFICOS: ALTO (LANTERNA)" : "GRAFICOS: BAIXO (RAPIDO)";
                 const char* txtFps = (optFps == 60) ? "LIMITE DE FPS: 60 FPS" : "LIMITE DE FPS: 30 FPS";
                 const char* txtSom = optSom ? "SOM: LIGADO" : "SOM: MUDO";
                 const char* txtShow = optMostrarFps ? "CONTADOR FPS: VISIVEL" : "CONTADOR FPS: OCULTO";
+                char txtRes[64];
+                const char* nomeRes[3] = { "100% (NATIVA)", "75% (ALTA)", "50% (720P PS2)" };
+                sprintf(txtRes, "RESOLUCAO 3D: %s (%dx%d)", nomeRes[optNivelRes], resW, resH);
 
                 DrawRectangleRounded(rGfx, 0.2f, 8, Color{ 30, 40, 48, 255 });
                 DrawText(txtGfx, (int)(rGfx.x + 220 - MeasureText(txtGfx, 22)/2), (int)(rGfx.y + 15), 22, WHITE);
@@ -500,6 +510,9 @@ int main() {
                 DrawRectangleRounded(rShowFps, 0.2f, 8, Color{ 30, 40, 48, 255 });
                 DrawText(txtShow, (int)(rShowFps.x + 220 - MeasureText(txtShow, 22)/2), (int)(rShowFps.y + 15), 22, WHITE);
 
+                DrawRectangleRounded(rRes, 0.2f, 8, Color{ 30, 40, 48, 255 });
+                DrawText(txtRes, (int)(rRes.x + 220 - MeasureText(txtRes, 20)/2), (int)(rRes.y + 16), 20, Color{ 100, 230, 170, 255 });
+
                 DrawRectangleRounded(rVoltar, 0.25f, 8, Color{ 35, 130, 80, 255 });
                 DrawText("VOLTAR", (int)(rVoltar.x + 140 - MeasureText("VOLTAR", 24)/2), (int)(rVoltar.y + 15), 24, WHITE);
 
@@ -508,6 +521,16 @@ int main() {
                     if (CheckCollisionPointRec(toque, rFps)) { optFps = (optFps == 30) ? 60 : 30; SetTargetFPS(optFps); }
                     if (CheckCollisionPointRec(toque, rSom)) { optSom = !optSom; SetMasterVolume(optSom ? 1.0f : 0.0f); }
                     if (CheckCollisionPointRec(toque, rShowFps)) optMostrarFps = !optMostrarFps;
+                    if (CheckCollisionPointRec(toque, rRes)) {
+                        optNivelRes = (optNivelRes + 1) % 3;
+                        resW = (int)(GetScreenWidth() * escalasRes[optNivelRes]);
+                        resH = (int)(GetScreenHeight() * escalasRes[optNivelRes]);
+                        if (resW < 320) resW = 320;
+                        if (resH < 180) resH = 180;
+                        UnloadRenderTexture(targetRes);
+                        targetRes = LoadRenderTexture(resW, resH);
+                        SetTextureFilter(targetRes.texture, TEXTURE_FILTER_BILINEAR);
+                    }
                     if (CheckCollisionPointRec(toque, rVoltar)) estadoAtual = TELA_LAUNCHER;
                 }
             }
@@ -757,7 +780,9 @@ int main() {
             ClearBackground(tempoAlertaGlobal > 0 ? Color{ 65, 12, 16, 255 } : Color{ 18, 22, 26, 255 });
 
             
-                                BeginMode3D(camera);
+                                BeginTextureMode(targetRes);
+        ClearBackground(Color{ 12, 16, 18, 255 });
+        BeginMode3D(camera);
             if (optLanterna) BeginShaderMode(shaderConsole);
                 DrawModel(modChao, { 0.0f, 0.0f, 0.0f }, 1.0f, WHITE);
                             DrawModel(modParedeFundo, { 0.0f, 2.5f, -11.35f }, 1.0f, WHITE);
@@ -860,6 +885,11 @@ int main() {
         }
 
             EndMode3D();
+        EndTextureMode();
+        DrawTexturePro(targetRes.texture,
+            Rectangle{ 0.0f, 0.0f, (float)targetRes.texture.width, -(float)targetRes.texture.height },
+            Rectangle{ 0.0f, 0.0f, sw, sh },
+            Vector2{ 0.0f, 0.0f }, 0.0f, WHITE);
 
                     // ============================================
         // HUD TÁTICA - ESTILO INFILTRAÇÃO
