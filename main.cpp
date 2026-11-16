@@ -228,14 +228,14 @@ void main() {
     // Cone de luz da lanterna (Silent Hill)
     float theta = dot(dirToFrag, normalize(spotDir));
     float cone = smoothstep(0.76, 0.94, theta);
-    float atenuacao = clamp(1.0 - (distSpot / 15.0), 0.0, 1.0);
+    float atenuacao = clamp(1.0 - (distSpot / 28.0), 0.0, 1.0);
     atenuacao = atenuacao * atenuacao;
 
     float diff = max(dot(norm, -dirToFrag), 0.15);
     vec3 luzLanterna = vec3(1.15, 1.08, 0.92) * cone * atenuacao * diff * 2.2;
 
     // Escuridao ambiente bem baixa fora do feixe
-    vec3 ambient = vec3(0.04, 0.05, 0.06);
+    vec3 ambient = vec3(0.56, 0.60, 0.64);
     vec3 colorLit = texel.rgb * (ambient + luzLanterna);
 
     // Nevoa escura no fundo
@@ -334,6 +334,56 @@ void carregarConfig(bool &lanterna, int &fps, bool &som, bool &showFps, int &niv
             nivelRes = (nr >= 0 && nr <= 2) ? nr : 0;
         }
         std::fclose(f);
+    }
+}
+
+
+Model modAsfalto, modCalcada, modPredio;
+bool modelosRuaProntos = false;
+void desenharRuaSilentHill() {
+    if (!modelosRuaProntos) {
+        Image i1 = GenImageChecked(64, 64, 8, 8, Color{36,38,42,255}, Color{44,46,50,255});
+        modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 1, 1));
+        modAsfalto.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i1);
+        UnloadImage(i1);
+
+        Image i2 = GenImageChecked(32, 32, 8, 8, Color{92,95,100,255}, Color{104,108,114,255});
+        modCalcada = LoadModelFromMesh(GenMeshCube(4.4f, 0.24f, 80.0f));
+        modCalcada.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i2);
+        UnloadImage(i2);
+
+        Image i3 = GenImageChecked(32, 32, 4, 8, Color{78,82,86,255}, Color{66,70,74,255});
+        modPredio = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
+        modPredio.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i3);
+        UnloadImage(i3);
+        modelosRuaProntos = true;
+    }
+    DrawModel(modAsfalto, Vector3{ 0.0f, 0.0f, 0.0f }, 1.0f, Color{ 165, 170, 175, 255 });
+    for (float z = -36.0f; z <= 36.0f; z += 4.5f)
+        DrawCube(Vector3{ 0.0f, 0.015f, z }, 0.22f, 0.02f, 2.2f, Color{ 195, 165, 55, 255 });
+    DrawModel(modCalcada, Vector3{ -8.2f, 0.12f, 0.0f }, 1.0f, Color{ 195, 200, 205, 255 });
+    DrawModel(modCalcada, Vector3{  8.2f, 0.12f, 0.0f }, 1.0f, Color{ 195, 200, 205, 255 });
+
+    struct Predio { float x, z, w, h, d; Color cor; };
+    Predio ps[] = {
+        {-14.5f,-28.0f,8.5f,16.0f,16.0f,{85,88,92,255}}, {-14.5f,-10.0f,8.5f,21.0f,17.0f,{95,90,85,255}},
+        {-14.5f,  9.0f,8.5f,14.0f,18.0f,{80,85,90,255}}, {-14.5f, 28.0f,8.5f,19.0f,16.0f,{90,88,84,255}},
+        { 14.5f,-27.0f,8.5f,18.0f,17.0f,{88,85,82,255}}, { 14.5f, -8.0f,8.5f,15.0f,16.0f,{78,84,90,255}},
+        { 14.5f, 10.0f,8.5f,22.0f,17.0f,{92,88,84,255}}, { 14.5f, 28.0f,8.5f,16.0f,16.0f,{82,86,90,255}}
+    };
+    for (int i = 0; i < 8; i++) {
+        DrawModelEx(modPredio, Vector3{ ps[i].x, ps[i].h/2.0f, ps[i].z }, Vector3{0,1,0}, 0.0f, Vector3{ ps[i].w, ps[i].h, ps[i].d }, ps[i].cor);
+        float fx = (ps[i].x < 0) ? (ps[i].x + ps[i].w/2.0f + 0.04f) : (ps[i].x - ps[i].w/2.0f - 0.04f);
+        for (float wy = 3.5f; wy < ps[i].h - 2.0f; wy += 3.2f)
+            for (float wz = ps[i].z - ps[i].d/2.0f + 2.5f; wz <= ps[i].z + ps[i].d/2.0f - 2.5f; wz += 3.5f)
+                DrawCube(Vector3{ fx, wy, wz }, 0.08f, 1.5f, 1.1f, Color{ 22, 26, 30, 255 });
+    }
+    for (float pz = -30.0f; pz <= 30.0f; pz += 15.0f) {
+        for (int l = -1; l <= 1; l += 2) {
+            float px = l * 6.4f;
+            DrawCylinder(Vector3{ px, 0.24f, pz }, 0.12f, 0.16f, 5.5f, 8, Color{ 48, 52, 56, 255 });
+            DrawCube(Vector3{ px - l*0.7f, 5.65f, pz }, 1.5f, 0.10f, 0.12f, Color{ 48, 52, 56, 255 });
+        }
     }
 }
 
@@ -439,18 +489,18 @@ int main() {
     std::vector<Bala> balas;
     int tempoAlertaGlobal = 0;
         bool modoPrimeiraPessoa = false;
-    Rectangle btnCamera = { (float)LARGURA - 145.0f, 15.0f, 130.0f, 38.0f };
+    Rectangle btnCamera = { (float)LARGURA - 145.0f, 28.0f, 130.0f, 38.0f };
 
         float tamBtn = 95.0f;
     Rectangle btnCima     = { 145.0f, (float)ALTURA - 290.0f, tamBtn, tamBtn };
-    Rectangle btnBaixo    = { 145.0f, (float)ALTURA - 115.0f, tamBtn, tamBtn };
+    Rectangle btnBaixo    = { 145.0f, (float)ALTURA - 128.0f, tamBtn, tamBtn };
     Rectangle btnEsquerda = {  50.0f, (float)ALTURA - 202.0f, tamBtn, tamBtn };
     Rectangle btnDireita  = { 240.0f, (float)ALTURA - 202.0f, tamBtn, tamBtn };
 
-    Vector2 centroBtnAgachar = { (float)LARGURA - 245.0f, (float)ALTURA - 115.0f };
+    Vector2 centroBtnAgachar = { (float)LARGURA - 245.0f, (float)ALTURA - 128.0f };
     float raioBtnAgachar     = 55.0f;
 
-    Vector2 centroBtnAtirar  = { (float)LARGURA - 115.0f, (float)ALTURA - 195.0f };
+    Vector2 centroBtnAtirar  = { (float)LARGURA - 128.0f, (float)ALTURA - 195.0f };
     float raioBtnAtirar      = 68.0f;
 
     
@@ -481,7 +531,7 @@ int main() {
         float sw = (float)GetScreenWidth();
         float sh = (float)GetScreenHeight();
         centroBtnAtirar = { sw - 125.0f, sh - 125.0f };
-        centroBtnAgachar = { sw - 115.0f, sh - 105.0f };
+        centroBtnAgachar = { sw - 128.0f, sh - 105.0f };
         btnCamera = { sw - 170.0f, 20.0f, 150.0f, 44.0f };
         Rectangle btnMenuHud = { sw - 335.0f, 20.0f, 150.0f, 44.0f };
 
@@ -867,8 +917,8 @@ int main() {
 
         if (alvoCamPos.x < -10.5f) alvoCamPos.x = -10.5f;
         if (alvoCamPos.x >  10.5f) alvoCamPos.x =  10.5f;
-        if (alvoCamPos.z < -10.5f) alvoCamPos.z = -10.5f;
-        if (alvoCamPos.z >  10.5f) alvoCamPos.z =  10.5f;
+        if (alvoCamPos.z < -38.5f) alvoCamPos.z = -38.5f;
+        if (alvoCamPos.z >  38.5f) alvoCamPos.z =  38.5f;
 
         camera.position = alvoCamPos;
         camera.target = {
@@ -904,7 +954,873 @@ int main() {
 
             
                                 BeginTextureMode(targetRes);
-        ClearBackground(Color{ 12, 16, 18, 255 });
+        ClearBackground(Color{ 142, 152, 162, 255 });
+        BeginMode3D(camera);
+            obstaculos.clear();
+        obstaculos.push_back(BoundingBox{ Vector3{-20,0,-42}, Vector3{-9.8f,25,42} });
+        obstaculos.push_back(BoundingBox{ Vector3{9.8f,0,-42}, Vector3{20,25,42} });
+        obstaculos.push_back(BoundingBox{ Vector3{-12,0,-42}, Vector3{12,5,-39.2f} });
+        obstaculos.push_back(BoundingBox{ Vector3{-12,0,39.2f}, Vector3{12,5,42} });
+        if (optLanterna) BeginShaderMode(shaderConsole);
+        desenharRuaSilentHill();
+        if (optLanterna) EndShaderMode();
+        desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool ehJogador, bool vivo, bool alerta) {
+    rlPushMatrix();
+        rlTranslatef(pos.x, pos.y, pos.z);
+        rlRotatef(angulo, 0.0f, 1.0f, 0.0f);
+
+        Color corJaqueta   = { 48, 62, 74, 255 };    // Jaqueta azul-acinzentada (estilo Harry Mason)
+        Color corCamiseta  = { 210, 212, 208, 255 }; // Camiseta branca por baixo
+        Color corJeans     = { 32, 44, 68, 255 };    // Calca jeans escura
+        Color corPele      = { 215, 178, 148, 255 }; // Rosto e maos
+        Color corCabelo    = { 58, 40, 28, 255 };    // Cabelo castanho escuro PS1
+        Color corSapato    = { 38, 28, 22, 255 };    // Botas marrons escuras
+        Color corContorno  = { 12, 14, 18, 255 };
+
+        float balanco = (cicloPasso > 0.0f) ? std::sin(cicloPasso) * 28.0f : 0.0f;
+        float respiracao = (cicloPasso == 0.0f) ? std::sin((float)GetTime() * 2.8f) * 0.015f : 0.0f;
+
+        // --- PERNAS (JEANS) ---
+        rlPushMatrix();
+            rlTranslatef(-0.13f, 0.78f, 0.0f);
+            rlRotatef(balanco, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corJeans);
+            DrawCubeWires({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corContorno);
+            DrawCube({ 0.0f, -0.72f, 0.04f }, 0.20f, 0.14f, 0.28f, corSapato);
+        rlPopMatrix();
+
+        rlPushMatrix();
+            rlTranslatef(0.13f, 0.78f, 0.0f);
+            rlRotatef(-balanco, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corJeans);
+            DrawCubeWires({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corContorno);
+            DrawCube({ 0.0f, -0.72f, 0.04f }, 0.20f, 0.14f, 0.28f, corSapato);
+        rlPopMatrix();
+
+        // --- TORSO (JAQUETA ABERTA + CAMISETA BRANCA + LANTERNA NO BOLSO) ---
+        float yTorso = 1.12f + respiracao;
+        DrawCube({ 0.0f, yTorso, 0.0f }, 0.48f, 0.66f, 0.26f, corJaqueta);
+        DrawCubeWires({ 0.0f, yTorso, 0.0f }, 0.48f, 0.66f, 0.26f, corContorno);
+        // Camiseta branca visivel na frente da jaqueta aberta
+        DrawCube({ 0.0f, yTorso + 0.02f, 0.135f }, 0.16f, 0.60f, 0.02f, corCamiseta);
+        // Gola da jaqueta
+        DrawCube({ -0.14f, yTorso + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
+        DrawCube({  0.14f, yTorso + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
+        // Lanterna presa no bolso esquerdo do peito
+        DrawCube({ -0.15f, yTorso + 0.12f, 0.15f }, 0.07f, 0.16f, 0.07f, Color{ 30, 32, 35, 255 });
+        DrawCube({ -0.15f, yTorso + 0.15f, 0.19f }, 0.06f, 0.06f, 0.02f, Color{ 255, 245, 200, 255 });
+
+        // --- CABECA E CABELO ESTILO PS1 ---
+        float yCabeca = 1.63f + respiracao;
+        DrawCube({ 0.0f, yCabeca, 0.0f }, 0.28f, 0.31f, 0.28f, corPele);
+        DrawCubeWires({ 0.0f, yCabeca, 0.0f }, 0.28f, 0.31f, 0.28f, corContorno);
+        // Cabelo castanho (topo, nuca e costeletas)
+        DrawCube({ 0.0f, yCabeca + 0.13f, -0.01f }, 0.30f, 0.11f, 0.31f, corCabelo);
+        DrawCube({ 0.0f, yCabeca + 0.02f, -0.14f }, 0.30f, 0.26f, 0.06f, corCabelo);
+        DrawCube({ -0.14f, yCabeca + 0.04f, -0.02f }, 0.04f, 0.18f, 0.24f, corCabelo);
+        DrawCube({  0.14f, yCabeca + 0.04f, -0.02f }, 0.04f, 0.18f, 0.24f, corCabelo);
+
+        // --- BRACOS SOLTOS (SEM ARMAS) ---
+        rlPushMatrix();
+            rlTranslatef(-0.31f, yTorso + 0.24f, 0.0f);
+            rlRotatef(-balanco * 0.85f, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corJaqueta);
+            DrawCubeWires({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corContorno);
+            DrawCube({ 0.0f, -0.55f, 0.0f }, 0.12f, 0.12f, 0.13f, corPele);
+        rlPopMatrix();
+
+        rlPushMatrix();
+            rlTranslatef(0.31f, yTorso + 0.24f, 0.0f);
+            rlRotatef(balanco * 0.85f, 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corJaqueta);
+            DrawCubeWires({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corContorno);
+            DrawCube({ 0.0f, -0.55f, 0.0f }, 0.12f, 0.12f, 0.13f, corPele);
+        rlPopMatrix();
+
+    rlPopMatrix();
+}
+
+bool pontoBloqueado3D(float x, float z, const std::vector<BoundingBox>& caixas) {
+    for (const auto& box : caixas) {
+        if (x >= box.min.x && x <= box.max.x && z >= box.min.z && z <= box.max.z) return true;
+    }
+    return false;
+    
+}
+
+// Shader embutido de Iluminacao Direcional + Nevoa (Fog) estilo Console
+const char* vsCodigo = R"(
+#version 100
+attribute vec3 vertexPosition;
+attribute vec2 vertexTexCoord;
+attribute vec3 vertexNormal;
+attribute vec4 vertexColor;
+uniform mat4 mvp;
+uniform mat4 matModel;
+varying vec2 fragTexCoord;
+varying vec4 fragColor;
+varying vec3 fragNormal;
+varying vec3 fragPos;
+void main() {
+    fragTexCoord = vertexTexCoord;
+    fragColor = vertexColor;
+    fragPos = vec3(matModel * vec4(vertexPosition, 1.0));
+    fragNormal = normalize(vec3(matModel * vec4(vertexNormal, 0.0)));
+    gl_Position = mvp * vec4(vertexPosition, 1.0);
+}
+)";
+
+const char* fsCodigo = R"(
+#version 100
+precision mediump float;
+varying vec2 fragTexCoord;
+varying vec4 fragColor;
+varying vec3 fragNormal;
+varying vec3 fragPos;
+uniform sampler2D texture0;
+uniform vec4 colDiffuse;
+uniform vec3 viewPos;
+uniform vec3 spotPos;
+uniform vec3 spotDir;
+void main() {
+    vec4 texel = texture2D(texture0, fragTexCoord) * colDiffuse * fragColor;
+    vec3 norm = normalize(fragNormal);
+
+    // Vetor da lanterna ate o ponto da parede/chao
+    vec3 toFrag = fragPos - spotPos;
+    float distSpot = length(toFrag);
+    vec3 dirToFrag = normalize(toFrag);
+
+    // Cone de luz da lanterna (Silent Hill)
+    float theta = dot(dirToFrag, normalize(spotDir));
+    float cone = smoothstep(0.76, 0.94, theta);
+    float atenuacao = clamp(1.0 - (distSpot / 28.0), 0.0, 1.0);
+    atenuacao = atenuacao * atenuacao;
+
+    float diff = max(dot(norm, -dirToFrag), 0.15);
+    vec3 luzLanterna = vec3(1.15, 1.08, 0.92) * cone * atenuacao * diff * 2.2;
+
+    // Escuridao ambiente bem baixa fora do feixe
+    vec3 ambient = vec3(0.56, 0.60, 0.64);
+    vec3 colorLit = texel.rgb * (ambient + luzLanterna);
+
+    // Nevoa escura no fundo
+    float distCam = length(viewPos - fragPos);
+    float fogFactor = clamp((distCam - 10.0) / 24.0, 0.0, 0.85);
+    vec3 finalColor = mix(colorLit, vec3(0.02, 0.03, 0.03), fogFactor);
+    gl_FragColor = vec4(finalColor, texel.a);
+}
+)";
+
+
+void Bloco(Vector3 origem, float x, float y, float z, Vector3 tamanho, Color cor) {
+    DrawCubeV({ origem.x + x, origem.y + y, origem.z + z }, tamanho, cor);
+}
+
+void DesenharCenarioIndustrial(Vector3 origem = { 0, 0, 0 }) {
+    Color metal       = { 38, 46, 51, 255 };
+    Color metalClaro  = { 85, 99, 105, 255 };
+    Color concreto    = { 65, 70, 73, 255 };
+    Color amarelo     = { 190, 155, 55, 255 };
+
+    // 1. LINHAS DE SEGURANÇA E CANALETAS NO CHÃO
+    for (int i = -9; i <= 9; i += 2) {
+        Bloco(origem, (float)i, 0.015f, -9.5f, { 0.14f, 0.02f, 1.8f }, amarelo);
+    }
+    for (int x = -8; x <= 8; x += 8) {
+        Bloco(origem, (float)x, 0.012f, 0.0f, { 0.16f, 0.02f, 22.0f }, metal);
+    }
+
+    // 2. PAREDES EXTERNAS (alinhadas com a colisão -11.25 a +11.25)
+    Bloco(origem, 0.0f, 2.5f, -11.35f, { 23.0f, 5.0f, 0.4f }, metal);
+    Bloco(origem, -11.35f, 2.5f, 0.0f, { 0.4f, 5.0f, 23.0f }, concreto);
+    Bloco(origem,  11.35f, 2.5f, 0.0f, { 0.4f, 5.0f, 23.0f }, concreto);
+
+    // 3. PAINÉIS METÁLICOS NAS PAREDES
+    for (int i = -8; i <= 8; i += 4) {
+        if (i != 8) {
+            Bloco(origem, (float)i, 2.3f, -11.12f, { 3.2f, 3.6f, 0.05f }, metalClaro);
+        }
+        Bloco(origem, -11.12f, 2.3f, (float)i, { 0.05f, 3.6f, 3.2f }, metalClaro);
+        Bloco(origem,  11.12f, 2.3f, (float)i, { 0.05f, 3.6f, 3.2f }, metalClaro);
+    }
+
+    // 4. PILARES NOS CANTOS E NAS PAREDES
+    float cantosX[2] = { -10.9f, 10.9f };
+    float cantosZ[3] = { -10.9f, 0.0f, 10.9f };
+    for (int ix = 0; ix < 2; ix++) {
+        for (int iz = 0; iz < 3; iz++) {
+            Bloco(origem, cantosX[ix], 2.5f, cantosZ[iz], { 0.75f, 5.0f, 0.75f }, metal);
+            Bloco(origem, cantosX[ix], 0.3f, cantosZ[iz], { 1.05f, 0.6f, 1.05f }, metalClaro);
+        }
+    }
+
+    // 5. TUBULAÇÕES E DETALHES INDUSTRIAIS NAS PAREDES
+    DrawCylinderEx(
+        { origem.x - 10.95f, origem.y + 4.1f, origem.z - 11.0f },
+        { origem.x - 10.95f, origem.y + 4.1f, origem.z + 11.0f },
+        0.11f, 0.11f, 8, metalClaro
+    );
+    DrawCylinderEx(
+        { origem.x - 11.0f, origem.y + 4.1f, origem.z - 10.95f },
+        { origem.x + 11.0f, origem.y + 4.1f, origem.z - 10.95f },
+        0.11f, 0.11f, 8, metalClaro
+    );
+
+    // Armário metálico lateral e placa de advertência
+    Bloco(origem, -10.6f, 1.3f, 3.5f, { 0.9f, 2.6f, 1.3f }, metal);
+    Bloco(origem, -10.12f, 1.3f, 3.5f, { 0.06f, 2.3f, 0.95f }, metalClaro);
+    Bloco(origem, 0.0f, 2.2f, -11.08f, { 2.4f, 0.75f, 0.06f }, amarelo);
+}
+
+
+
+
+const char* caminhoConfig() {
+#ifdef PLATFORM_ANDROID
+    return "/data/data/com.jonathan.meujogo3d/files/config.txt";
+#else
+    return "config.txt";
+#endif
+}
+void salvarConfig(bool lanterna, int fps, bool som, bool showFps, int nivelRes) {
+    FILE* f = std::fopen(caminhoConfig(), "w");
+    if (f) {
+        std::fprintf(f, "%d %d %d %d %d\n", lanterna ? 1 : 0, fps, som ? 1 : 0, showFps ? 1 : 0, nivelRes);
+        std::fclose(f);
+    }
+}
+void carregarConfig(bool &lanterna, int &fps, bool &som, bool &showFps, int &nivelRes) {
+    FILE* f = std::fopen(caminhoConfig(), "r");
+    if (f) {
+        int l = 1, fp = 30, s = 1, sf = 1, nr = 0;
+        if (std::fscanf(f, "%d %d %d %d %d", &l, &fp, &s, &sf, &nr) == 5) {
+            lanterna = (l != 0); fps = (fp == 60) ? 60 : 30;
+            som = (s != 0); showFps = (sf != 0);
+            nivelRes = (nr >= 0 && nr <= 2) ? nr : 0;
+        }
+        std::fclose(f);
+    }
+}
+
+
+Model modAsfalto, modCalcada, modPredio;
+bool modelosRuaProntos = false;
+void desenharRuaSilentHill() {
+    if (!modelosRuaProntos) {
+        Image i1 = GenImageChecked(64, 64, 8, 8, Color{36,38,42,255}, Color{44,46,50,255});
+        modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 1, 1));
+        modAsfalto.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i1);
+        UnloadImage(i1);
+
+        Image i2 = GenImageChecked(32, 32, 8, 8, Color{92,95,100,255}, Color{104,108,114,255});
+        modCalcada = LoadModelFromMesh(GenMeshCube(4.4f, 0.24f, 80.0f));
+        modCalcada.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i2);
+        UnloadImage(i2);
+
+        Image i3 = GenImageChecked(32, 32, 4, 8, Color{78,82,86,255}, Color{66,70,74,255});
+        modPredio = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
+        modPredio.materials.maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i3);
+        UnloadImage(i3);
+        modelosRuaProntos = true;
+    }
+    DrawModel(modAsfalto, Vector3{ 0.0f, 0.0f, 0.0f }, 1.0f, Color{ 165, 170, 175, 255 });
+    for (float z = -36.0f; z <= 36.0f; z += 4.5f)
+        DrawCube(Vector3{ 0.0f, 0.015f, z }, 0.22f, 0.02f, 2.2f, Color{ 195, 165, 55, 255 });
+    DrawModel(modCalcada, Vector3{ -8.2f, 0.12f, 0.0f }, 1.0f, Color{ 195, 200, 205, 255 });
+    DrawModel(modCalcada, Vector3{  8.2f, 0.12f, 0.0f }, 1.0f, Color{ 195, 200, 205, 255 });
+
+    struct Predio { float x, z, w, h, d; Color cor; };
+    Predio ps[] = {
+        {-14.5f,-28.0f,8.5f,16.0f,16.0f,{85,88,92,255}}, {-14.5f,-10.0f,8.5f,21.0f,17.0f,{95,90,85,255}},
+        {-14.5f,  9.0f,8.5f,14.0f,18.0f,{80,85,90,255}}, {-14.5f, 28.0f,8.5f,19.0f,16.0f,{90,88,84,255}},
+        { 14.5f,-27.0f,8.5f,18.0f,17.0f,{88,85,82,255}}, { 14.5f, -8.0f,8.5f,15.0f,16.0f,{78,84,90,255}},
+        { 14.5f, 10.0f,8.5f,22.0f,17.0f,{92,88,84,255}}, { 14.5f, 28.0f,8.5f,16.0f,16.0f,{82,86,90,255}}
+    };
+    for (int i = 0; i < 8; i++) {
+        DrawModelEx(modPredio, Vector3{ ps[i].x, ps[i].h/2.0f, ps[i].z }, Vector3{0,1,0}, 0.0f, Vector3{ ps[i].w, ps[i].h, ps[i].d }, ps[i].cor);
+        float fx = (ps[i].x < 0) ? (ps[i].x + ps[i].w/2.0f + 0.04f) : (ps[i].x - ps[i].w/2.0f - 0.04f);
+        for (float wy = 3.5f; wy < ps[i].h - 2.0f; wy += 3.2f)
+            for (float wz = ps[i].z - ps[i].d/2.0f + 2.5f; wz <= ps[i].z + ps[i].d/2.0f - 2.5f; wz += 3.5f)
+                DrawCube(Vector3{ fx, wy, wz }, 0.08f, 1.5f, 1.1f, Color{ 22, 26, 30, 255 });
+    }
+    for (float pz = -30.0f; pz <= 30.0f; pz += 15.0f) {
+        for (int l = -1; l <= 1; l += 2) {
+            float px = l * 6.4f;
+            DrawCylinder(Vector3{ px, 0.24f, pz }, 0.12f, 0.16f, 5.5f, 8, Color{ 48, 52, 56, 255 });
+            DrawCube(Vector3{ px - l*0.7f, 5.65f, pz }, 1.5f, 0.10f, 0.12f, Color{ 48, 52, 56, 255 });
+        }
+    }
+}
+
+int main() {
+    const int LARGURA = 960;
+    const int ALTURA = 432;
+    SetConfigFlags(FLAG_FULLSCREEN_MODE); 
+    InitWindow(0, 0, "Novo Metal Gear - IA Tatica");
+    InitAudioDevice();
+    SetTargetFPS(30);
+
+    Texture2D texCimento = gerarTexturaCimento();
+    Texture2D texCaixa   = gerarTexturaCaixa();
+        GenTextureMipmaps(&texCimento);
+    SetTextureFilter(texCimento, TEXTURE_FILTER_TRILINEAR);
+    GenTextureMipmaps(&texCaixa);
+    SetTextureFilter(texCaixa, TEXTURE_FILTER_TRILINEAR);
+        modPistola = LoadModel("armas/pistola.obj");
+    Texture2D texPistola = LoadTexture("armas/Pistol_01_Albedo.png");
+    modPistola.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texPistola;
+
+    modRifle = LoadModel("armas/rifle.obj");
+    Texture2D texRifle = LoadTexture("armas/Rifle_01_Albedo.png");
+    modRifle.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texRifle;
+
+    Sound somAlerta      = criarSomAlerta();
+    Sound somPistola     = criarSomSilenciador();
+    Sound somAK47        = criarSomAK47();
+
+    Model modChao        = LoadModelFromMesh(GenMeshPlane(24.0f, 24.0f, 1, 1));
+    modChao.materials->maps[MATERIAL_MAP_DIFFUSE].texture = texCimento;
+
+    Model modParedeFundo = LoadModelFromMesh(GenMeshCube(24.0f, 9.2f, 1.0f));
+    modParedeFundo.materials->maps[MATERIAL_MAP_DIFFUSE].texture = texCimento;
+
+    Model modParedeLat   = LoadModelFromMesh(GenMeshCube(1.0f, 9.2f, 24.0f));
+    modParedeLat.materials->maps[MATERIAL_MAP_DIFFUSE].texture = texCimento;
+
+    Model modCaixaGrande = LoadModelFromMesh(GenMeshCube(4.0f, 2.5f, 3.0f));
+    modCaixaGrande.materials->maps[MATERIAL_MAP_DIFFUSE].texture = texCaixa;
+
+    Model modCaixaBaixa  = LoadModelFromMesh(GenMeshCube(5.0f, 1.5f, 1.5f));
+    modCaixaBaixa.materials->maps[MATERIAL_MAP_DIFFUSE].texture = texCaixa;
+        // Ativa iluminacao direcional e nevoa nos materiais
+    Shader shaderConsole = LoadShaderFromMemory(vsCodigo, fsCodigo);
+    int viewPosLoc = GetShaderLocation(shaderConsole, "viewPos");
+        int spotPosLoc = GetShaderLocation(shaderConsole, "spotPos");
+    int spotDirLoc = GetShaderLocation(shaderConsole, "spotDir");
+
+    modChao.materials->shader = shaderConsole;
+    modCaixaGrande.materials->shader = shaderConsole;
+    modCaixaBaixa.materials->shader = shaderConsole;
+    modPistola.materials[0].shader = shaderConsole;
+        // Aplica as texturas industriais geradas no chao e nas paredes
+    Texture2D texChaoNova   = LoadTexture("chao_grade.png");
+    Texture2D texParedeNova = LoadTexture("parede_metal.png");
+    SetTextureFilter(texChaoNova, TEXTURE_FILTER_POINT);
+    SetTextureFilter(texParedeNova, TEXTURE_FILTER_POINT);
+
+    modChao.materials->maps[MATERIAL_MAP_DIFFUSE].texture = texChaoNova;
+    modParedeFundo.materials->maps[MATERIAL_MAP_DIFFUSE].texture = texParedeNova;
+    modParedeLat.materials->maps[MATERIAL_MAP_DIFFUSE].texture = texParedeNova;
+
+    modParedeFundo.materials->shader = shaderConsole;
+    modParedeLat.materials->shader = shaderConsole;
+
+    Vector3 posSnake = { 0.0f, 0.0f, 9.0f };
+    float anguloSnake = 180.0f;
+    float cicloPassoSnake = 0.0f;
+    float velocidadeBase = 0.15f;
+    bool agachado = false;
+    int vidaSnake = 100;
+
+    Camera3D camera = { 0 };
+    camera.position = { 0.0f, 13.5f, 18.0f };
+    camera.target = posSnake;
+    camera.up = { 0.0f, 1.0f, 0.0f };
+    camera.fovy = 45.0f;
+    camera.projection = CAMERA_PERSPECTIVE;
+
+    std::vector<BoundingBox> obstaculos = {
+        { { -7.0f, 0.0f, -2.0f }, { -3.0f, 2.5f, 1.0f } },
+        { {  3.0f, 0.0f, -2.0f }, {  7.0f, 2.5f, 1.0f } },
+        { { -2.5f, 0.0f,  3.0f }, {  2.5f, 1.5f, 4.5f } }
+    };
+
+    BoundingBox boxElevador = { { 7.0f, 0.0f, -11.5f }, { 10.0f, 3.2f, -9.8f } };
+
+    // Rota em circuito (4 cantos ao redor da área central)
+    std::vector<Vector3> rotaCircuito = {
+        { -8.5f, 0.0f, -6.5f },
+        {  8.5f, 0.0f, -6.5f },
+        {  8.5f, 0.0f,  2.0f },
+        { -8.5f, 0.0f,  2.0f }
+    };
+
+    // 2 Guardas em pontos opostos do circuito
+    std::vector<Guarda> guardas = {
+        { { -8.5f, 0.0f, -6.5f }, 90.0f, 0.0f, 100, 0, 1, 0, 0, { 0, 0, 0 } },
+        { {  8.5f, 0.0f,  2.0f }, -90.0f, 0.0f, 100, 0, 3, 0, 0, { 0, 0, 0 } }
+    };
+
+    std::vector<Bala> balas;
+    int tempoAlertaGlobal = 0;
+        bool modoPrimeiraPessoa = false;
+    Rectangle btnCamera = { (float)LARGURA - 145.0f, 28.0f, 130.0f, 38.0f };
+
+        float tamBtn = 95.0f;
+    Rectangle btnCima     = { 145.0f, (float)ALTURA - 290.0f, tamBtn, tamBtn };
+    Rectangle btnBaixo    = { 145.0f, (float)ALTURA - 128.0f, tamBtn, tamBtn };
+    Rectangle btnEsquerda = {  50.0f, (float)ALTURA - 202.0f, tamBtn, tamBtn };
+    Rectangle btnDireita  = { 240.0f, (float)ALTURA - 202.0f, tamBtn, tamBtn };
+
+    Vector2 centroBtnAgachar = { (float)LARGURA - 245.0f, (float)ALTURA - 128.0f };
+    float raioBtnAgachar     = 55.0f;
+
+    Vector2 centroBtnAtirar  = { (float)LARGURA - 128.0f, (float)ALTURA - 195.0f };
+    float raioBtnAtirar      = 68.0f;
+
+    
+    enum EstadoJogo { TELA_LAUNCHER, TELA_OPCOES, TELA_JOGANDO };
+    EstadoJogo estadoAtual = TELA_LAUNCHER;
+    bool optLanterna = true;
+    int optFps = 30;
+    bool optSom = true;
+    bool optMostrarFps = true;
+    int optNivelRes = 0; // 0 = 100% Nativa, 1 = 75% (1080p), 2 = 50% (720p)
+    float escalasRes[3] = { 1.0f, 0.75f, 0.50f };
+    int resW = GetScreenWidth();
+    int resH = GetScreenHeight();
+    RenderTexture2D targetRes = LoadRenderTexture(resW, resH);
+    SetTextureFilter(targetRes.texture, TEXTURE_FILTER_BILINEAR);
+    carregarConfig(optLanterna, optFps, optSom, optMostrarFps, optNivelRes);
+    SetTargetFPS(optFps);
+    SetMasterVolume(optSom ? 1.0f : 0.0f);
+    resW = (int)(GetScreenWidth() * escalasRes[optNivelRes]);
+    resH = (int)(GetScreenHeight() * escalasRes[optNivelRes]);
+    if (resW < 320) resW = 320;
+    if (resH < 180) resH = 180;
+    UnloadRenderTexture(targetRes);
+    targetRes = LoadRenderTexture(resW, resH);
+    SetTextureFilter(targetRes.texture, TEXTURE_FILTER_BILINEAR);
+
+    while (!WindowShouldClose()) {
+        float sw = (float)GetScreenWidth();
+        float sh = (float)GetScreenHeight();
+        centroBtnAtirar = { sw - 125.0f, sh - 125.0f };
+        centroBtnAgachar = { sw - 128.0f, sh - 105.0f };
+        btnCamera = { sw - 170.0f, 20.0f, 150.0f, 44.0f };
+        Rectangle btnMenuHud = { sw - 335.0f, 20.0f, 150.0f, 44.0f };
+
+        Vector2 baseAnalogico = { 185.0f, sh - 185.0f };
+        float raioBaseAnalogico = 120.0f;
+        Vector2 pinoAnalogico = baseAnalogico;
+        float eixoX = 0.0f, eixoY = 0.0f;
+
+        Vector2 posBtnA = { sw - 195.0f, sh - 110.0f };
+        Vector2 posBtnB = { sw - 110.0f, sh - 195.0f };
+        Vector2 posBtnX = { sw - 280.0f, sh - 195.0f };
+        Vector2 posBtnY = { sw - 195.0f, sh - 280.0f };
+        float raioBtnXbox = 45.0f;
+
+        bool btnAPress = false, btnBPress = false, btnXPress = false, btnYPress = false;
+        if (estadoAtual == TELA_JOGANDO) {
+            int tc = GetTouchPointCount();
+            if (tc > 0) {
+                for (int t = 0; t < tc; t++) {
+                    Vector2 tp = GetTouchPosition(t);
+                    float d = std::hypot(tp.x - baseAnalogico.x, tp.y - baseAnalogico.y);
+                    if (d < raioBaseAnalogico * 1.7f && tp.x < sw * 0.45f) {
+                        float dx = tp.x - baseAnalogico.x, dy = tp.y - baseAnalogico.y;
+                        if (d > raioBaseAnalogico) { dx = (dx/d)*raioBaseAnalogico; dy = (dy/d)*raioBaseAnalogico; }
+                        pinoAnalogico = { baseAnalogico.x + dx, baseAnalogico.y + dy };
+                        eixoX = dx / raioBaseAnalogico; eixoY = dy / raioBaseAnalogico;
+                    }
+                    if (CheckCollisionPointCircle(tp, posBtnA, raioBtnXbox * 1.2f)) btnAPress = true;
+                    if (CheckCollisionPointCircle(tp, posBtnB, raioBtnXbox * 1.2f)) btnBPress = true;
+                    if (CheckCollisionPointCircle(tp, posBtnX, raioBtnXbox * 1.2f)) btnXPress = true;
+                    if (CheckCollisionPointCircle(tp, posBtnY, raioBtnXbox * 1.2f)) btnYPress = true;
+                }
+            } else if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+                Vector2 mp = GetMousePosition();
+                float d = std::hypot(mp.x - baseAnalogico.x, mp.y - baseAnalogico.y);
+                if (d < raioBaseAnalogico * 1.7f && mp.x < sw * 0.45f) {
+                    float dx = mp.x - baseAnalogico.x, dy = mp.y - baseAnalogico.y;
+                    if (d > raioBaseAnalogico) { dx = (dx/d)*raioBaseAnalogico; dy = (dy/d)*raioBaseAnalogico; }
+                    pinoAnalogico = { baseAnalogico.x + dx, baseAnalogico.y + dy };
+                    eixoX = dx / raioBaseAnalogico; eixoY = dy / raioBaseAnalogico;
+                }
+                if (CheckCollisionPointCircle(mp, posBtnA, raioBtnXbox * 1.2f)) btnAPress = true;
+                if (CheckCollisionPointCircle(mp, posBtnB, raioBtnXbox * 1.2f)) btnBPress = true;
+                if (CheckCollisionPointCircle(mp, posBtnX, raioBtnXbox * 1.2f)) btnXPress = true;
+                if (CheckCollisionPointCircle(mp, posBtnY, raioBtnXbox * 1.2f)) btnYPress = true;
+            }
+            static bool bAnt = false;
+            if (btnBPress && !bAnt) agachado = !agachado;
+            bAnt = btnBPress;
+        }
+
+
+        if (estadoAtual != TELA_JOGANDO) {
+            BeginDrawing();
+            ClearBackground(Color{ 12, 16, 20, 255 });
+            Vector2 toque = GetMousePosition();
+            bool clicou = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+            DrawRectangleLinesEx(Rectangle{ 24, 24, sw - 48, sh - 48 }, 3, Color{ 50, 200, 120, 200 });
+            const char* titulo = "SHADOW PROTOCOL 3D";
+            int tw = MeasureText(titulo, 44);
+            DrawText(titulo, (int)(sw/2 - tw/2) + 3, 58, 44, BLACK);
+            DrawText(titulo, (int)(sw/2 - tw/2), 55, 44, Color{ 90, 245, 160, 255 });
+
+            if (estadoAtual == TELA_LAUNCHER) {
+                Rectangle rJogar = { sw/2 - 200, sh/2 - 70, 400, 76 };
+                Rectangle rOpcoes = { sw/2 - 200, sh/2 + 26, 400, 76 };
+
+                DrawRectangleRounded(rJogar, 0.25f, 10, Color{ 32, 145, 85, 255 });
+                DrawRectangleRoundedLinesEx(rJogar, 0.25f, 10, 3, WHITE);
+                DrawText("JOGAR", (int)(rJogar.x + 200 - MeasureText("JOGAR", 34)/2) + 2, (int)(rJogar.y + 23), 34, BLACK);
+                DrawText("JOGAR", (int)(rJogar.x + 200 - MeasureText("JOGAR", 34)/2), (int)(rJogar.y + 21), 34, WHITE);
+
+                DrawRectangleRounded(rOpcoes, 0.25f, 10, Color{ 36, 48, 60, 255 });
+                DrawRectangleRoundedLinesEx(rOpcoes, 0.25f, 10, 3, Color{ 130, 210, 175, 255 });
+                DrawText("OPCOES", (int)(rOpcoes.x + 200 - MeasureText("OPCOES", 34)/2) + 2, (int)(rOpcoes.y + 23), 34, BLACK);
+                DrawText("OPCOES", (int)(rOpcoes.x + 200 - MeasureText("OPCOES", 34)/2), (int)(rOpcoes.y + 21), 34, WHITE);
+
+                if (clicou && CheckCollisionPointRec(toque, rJogar)) estadoAtual = TELA_JOGANDO;
+                if (clicou && CheckCollisionPointRec(toque, rOpcoes)) estadoAtual = TELA_OPCOES;
+            } else if (estadoAtual == TELA_OPCOES) {
+                float bw = 560.0f, bh = 58.0f, bx = sw/2 - bw/2;
+                Rectangle rGfx = { bx, 125, bw, bh };
+                Rectangle rFps = { bx, 193, bw, bh };
+                Rectangle rSom = { bx, 261, bw, bh };
+                Rectangle rShowFps = { bx, 329, bw, bh };
+                Rectangle rRes = { bx, 397, bw, bh };
+                Rectangle rVoltar = { sw/2 - 180, sh - 102, 360, 64 };
+
+                const char* txtGfx = optLanterna ? "GRAFICOS: ALTO (LANTERNA + NEVOA)" : "GRAFICOS: BAIXO (MODO RAPIDO)";
+                const char* txtFps = (optFps == 60) ? "LIMITE DE FPS: 60 FPS" : "LIMITE DE FPS: 30 FPS";
+                const char* txtSom = optSom ? "SOM: LIGADO" : "SOM: MUDO";
+                const char* txtShow = optMostrarFps ? "CONTADOR FPS: VISIVEL" : "CONTADOR FPS: OCULTO";
+                char txtRes[64];
+                const char* nomeRes[] = { "100% (NATIVA)", "75% (ALTA)", "50% (720P PS2)" };
+                sprintf(txtRes, "RESOLUCAO 3D: %s (%dx%d)", nomeRes[optNivelRes], resW, resH);
+
+                Rectangle botoes[] = { rGfx, rFps, rSom, rShowFps, rRes };
+                const char* textos[] = { txtGfx, txtFps, txtSom, txtShow, txtRes };
+                for (int i = 0; i < 5; i++) {
+                    DrawRectangleRounded(botoes[i], 0.22f, 8, Color{ 30, 42, 52, 255 });
+                    DrawRectangleRoundedLinesEx(botoes[i], 0.22f, 8, 2, Color{ 95, 165, 140, 220 });
+                    int fsize = (i == 4) ? 23 : 25;
+                    int tx = (int)(botoes[i].x + bw/2 - MeasureText(textos[i], fsize)/2);
+                    int ty = (int)(botoes[i].y + (bh - fsize)/2);
+                    DrawText(textos[i], tx + 2, ty + 2, fsize, BLACK);
+                    DrawText(textos[i], tx, ty, fsize, (i == 4) ? Color{ 110, 245, 180, 255 } : WHITE);
+                }
+
+                DrawRectangleRounded(rVoltar, 0.25f, 10, Color{ 32, 145, 85, 255 });
+                DrawRectangleRoundedLinesEx(rVoltar, 0.25f, 10, 3, WHITE);
+                DrawText("SALVAR E VOLTAR", (int)(rVoltar.x + 180 - MeasureText("SALVAR E VOLTAR", 26)/2), (int)(rVoltar.y + 19), 26, WHITE);
+
+                if (clicou) {
+                    bool mudou = false;
+                    if (CheckCollisionPointRec(toque, rGfx)) { optLanterna = !optLanterna; mudou = true; }
+                    if (CheckCollisionPointRec(toque, rFps)) { optFps = (optFps == 30) ? 60 : 30; SetTargetFPS(optFps); mudou = true; }
+                    if (CheckCollisionPointRec(toque, rSom)) { optSom = !optSom; SetMasterVolume(optSom ? 1.0f : 0.0f); mudou = true; }
+                    if (CheckCollisionPointRec(toque, rShowFps)) { optMostrarFps = !optMostrarFps; mudou = true; }
+                    if (CheckCollisionPointRec(toque, rRes)) {
+                        optNivelRes = (optNivelRes + 1) % 3;
+                        resW = (int)(GetScreenWidth() * escalasRes[optNivelRes]);
+                        resH = (int)(GetScreenHeight() * escalasRes[optNivelRes]);
+                        if (resW < 320) resW = 320;
+                        if (resH < 180) resH = 180;
+                        UnloadRenderTexture(targetRes);
+                        targetRes = LoadRenderTexture(resW, resH);
+                        SetTextureFilter(targetRes.texture, TEXTURE_FILTER_BILINEAR);
+                        mudou = true;
+                    }
+                    if (mudou) salvarConfig(optLanterna, optFps, optSom, optMostrarFps, optNivelRes);
+                    if (CheckCollisionPointRec(toque, rVoltar)) {
+                        salvarConfig(optLanterna, optFps, optSom, optMostrarFps, optNivelRes);
+                        estadoAtual = TELA_LAUNCHER;
+                    }
+                }
+            }
+            EndDrawing();
+            continue;
+        }
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), btnMenuHud)) {
+            estadoAtual = TELA_LAUNCHER;
+        }
+
+        Vector3 posAnterior = posSnake;
+        bool moveCima = false, moveBaixo = false, moveEsq = false, moveDir = false;
+
+        Vector2 dedo = GetMousePosition();
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            if (CheckCollisionPointRec(dedo, btnCima))     moveCima = true;
+            if (CheckCollisionPointRec(dedo, btnBaixo))    moveBaixo = true;
+            if (CheckCollisionPointRec(dedo, btnEsquerda)) moveEsq = true;
+            if (CheckCollisionPointRec(dedo, btnDireita))  moveDir = true;
+        }
+
+        bool atirouAgora = false;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (CheckCollisionPointCircle(dedo, centroBtnAgachar, raioBtnAgachar)) agachado = !agachado;
+            if (CheckCollisionPointCircle(dedo, centroBtnAtirar, raioBtnAtirar))   atirouAgora = true;
+        }
+
+        if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))    moveCima = true;
+        if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))  moveBaixo = true;
+        if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))  moveEsq = true;
+        if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) moveDir = true;
+        if (IsKeyPressed(KEY_C)) agachado = !agachado;
+        if (IsKeyPressed(KEY_SPACE)) atirouAgora = true;
+
+        float velAtual = agachado ? (velocidadeBase * 0.55f) : velocidadeBase;
+        float dx = 0.0f, dz = 0.0f;
+        if (moveCima)  dz -= 1.0f;
+        if (moveBaixo) dz += 1.0f;
+        if (moveEsq)   dx -= 1.0f;
+        if (moveDir)   dx += 1.0f;
+
+                if (false && modoPrimeiraPessoa) {
+            // Na 1a pessoa: < e > giram a visao; ^ e v andam para frente e para tras
+            if (dx != 0.0f) anguloSnake -= dx * 2.8f;
+            float rad = anguloSnake * DEG2RAD;
+            if (dz != 0.0f) {
+                float frente = -dz; // ^ (dz < 0) anda para frente
+                posSnake.x += std::sin(rad) * frente * velAtual;
+                posSnake.z += std::cos(rad) * frente * velAtual;
+                cicloPassoSnake += 0.25f;
+            } else {
+                cicloPassoSnake = 0.0f;
+            }
+        } else {
+            // Na camera alta (Tactical): movimento livre nas 4 direcoes do mapa
+            if (dx != 0.0f || dz != 0.0f) {
+                float len = std::sqrt(dx * dx + dz * dz);
+                dx /= len;
+                dz /= len;
+                posSnake.x += dx * velAtual;
+                posSnake.z += dz * velAtual;
+                anguloSnake = std::atan2(dx, dz) * RAD2DEG;
+                cicloPassoSnake += 0.25f;
+            } else {
+                cicloPassoSnake = 0.0f;
+            }
+        }
+
+    
+
+         if (atirouAgora) {
+            PlaySound(somPistola);
+            float radTiro = anguloSnake * DEG2RAD;
+            float altTiro = agachado ? 0.85f : 1.35f;
+            Bala b = {
+                { posSnake.x + std::sin(radTiro) * 0.8f, altTiro, posSnake.z + std::cos(radTiro) * 0.8f },
+                { std::sin(radTiro) * 0.45f, 0.0f, std::cos(radTiro) * 0.45f },
+                true, true
+            };
+            balas.push_back(b);
+        }
+
+        BoundingBox boxSnake = {
+            { posSnake.x - 0.55f, 0.0f, posSnake.z - 0.55f },
+            { posSnake.x + 0.55f, 2.0f, posSnake.z + 0.55f }
+        };
+
+        bool bateu = (posSnake.x < -10.8f || posSnake.x > 10.8f || posSnake.z < -10.8f || posSnake.z > 10.8f);
+        for (const auto& obs : obstaculos) {
+            if (CheckCollisionBoxes(boxSnake, obs)) bateu = true;
+        }
+        if (bateu) posSnake = posAnterior;
+
+        // Reset ao vencer no elevador ou morrer
+        if ((CheckCollisionBoxes(boxSnake, boxElevador) && tempoAlertaGlobal == 0) || vidaSnake <= 0) {
+            posSnake = { 0.0f, 0.0f, 9.0f };
+            vidaSnake = 100;
+            tempoAlertaGlobal = 0;
+            balas.clear();
+            guardas[0] = { { -8.5f, 0.0f, -6.5f }, 90.0f, 0.0f, 100, 0, 1, 0, 0, { 0, 0, 0 } };
+            guardas[1] = { {  8.5f, 0.0f,  2.0f }, -90.0f, 0.0f, 100, 0, 3, 0, 0, { 0, 0, 0 } };
+        }
+
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), btnCamera)) {
+            modoPrimeiraPessoa = !modoPrimeiraPessoa;
+        }
+
+        float radSnake = anguloSnake * DEG2RAD;
+        if (false && modoPrimeiraPessoa) {
+            float alturaOlhos = agachado ? 0.95f : 1.65f;
+            camera.position = { posSnake.x + std::sin(radSnake) * 0.25f, alturaOlhos, posSnake.z + std::cos(radSnake) * 0.25f };
+            camera.target   = { posSnake.x + std::sin(radSnake) * 8.0f,  alturaOlhos, posSnake.z + std::cos(radSnake) * 8.0f };
+        } else {
+            camera.target   = { posSnake.x, 1.0f, posSnake.z };
+            camera.position = { posSnake.x * 0.6f, 13.5f, posSnake.z + 18.0f };
+        }
+
+
+        // --- INTELIGÊNCIA ARTIFICIAL DOS 2 GUARDAS ---
+        for (auto& g : guardas) {
+            if (g.vida <= 0) continue;
+
+            if (g.estado == 0) {
+                // Estado 0: Patrulha em circuito com paradas para olhar em volta
+                if (g.tempoPausa > 0) {
+                    g.tempoPausa--;
+                    g.cicloPasso = 0.0f;
+                    g.angulo += (g.tempoPausa > 30) ? 1.5f : -1.5f; // Olha para os lados
+                } else {
+                    Vector3 alvo = rotaCircuito[g.pontoRota];
+                    float gx = alvo.x - g.pos.x;
+                    float gz = alvo.z - g.pos.z;
+                    float dist = std::sqrt(gx * gx + gz * gz);
+
+                    if (dist < 0.25f) {
+                        g.pontoRota = (g.pontoRota + 1) % rotaCircuito.size();
+                        g.tempoPausa = 60; // Para 1 segundo para vigiar cada esquina
+                    } else {
+                        g.pos.x += (gx / dist) * 0.07f;
+                        g.pos.z += (gz / dist) * 0.07f;
+                        g.angulo = std::atan2(gx, gz) * RAD2DEG;
+                        g.cicloPasso += 0.20f;
+                    }
+                }
+            } else if (g.estado == 1) {
+                // Estado 1: Investigando ruído ou último local visto
+                float gx = g.alvoInvestigar.x - g.pos.x;
+                float gz = g.alvoInvestigar.z - g.pos.z;
+                float dist = std::sqrt(gx * gx + gz * gz);
+                if (dist < 0.5f) {
+                    g.estado = 0;
+                    g.tempoPausa = 70;
+                } else {
+                    Vector3 antG = g.pos;
+                    g.pos.x += (gx / dist) * 0.09f;
+                    g.pos.z += (gz / dist) * 0.09f;
+                    if (pontoBloqueado3D(g.pos.x, g.pos.z, obstaculos)) { g.pos = antG; g.estado = 0; }
+                    g.angulo = std::atan2(gx, gz) * RAD2DEG;
+                    g.cicloPasso += 0.24f;
+                }
+            } else if (g.estado == 2) {
+                // Estado 2: Combate com AK-47!
+                g.cicloPasso = 0.0f;
+                float gx = posSnake.x - g.pos.x;
+                float gz = posSnake.z - g.pos.z;
+                g.angulo = std::atan2(gx, gz) * RAD2DEG;
+
+                if (g.cooldownTiro <= 0) {
+                    PlaySound(somAK47);
+                    float lenG = std::sqrt(gx * gx + gz * gz);
+                    Bala bInimiga = {
+                        { g.pos.x + (gx / lenG) * 0.9f, 1.35f, g.pos.z + (gz / lenG) * 0.9f },
+                        { (gx / lenG) * 0.36f, 0.0f, (gz / lenG) * 0.36f },
+                        false, true
+                    };
+                    balas.push_back(bInimiga);
+                    g.cooldownTiro = 16;
+                } else {
+                    g.cooldownTiro--;
+                }
+            }
+        }
+        // Atualiza balas e verifica dano
+        for (auto& b : balas) {
+            if (!b.ativa) continue;
+            b.pos.x += b.vel.x;
+            b.pos.z += b.vel.z;
+
+            if (b.pos.x < -11.5f || b.pos.x > 11.5f || b.pos.z < -11.5f || b.pos.z > 11.5f || pontoBloqueado3D(b.pos.x, b.pos.z, obstaculos)) {
+                b.ativa = false;
+                // Se a bala bater perto de um guarda vivo, ele vai investigar o barulho!
+                for (auto& g : guardas) {
+                    if (g.vida > 0 && g.estado == 0) {
+                        float dxB = b.pos.x - g.pos.x;
+                        float dzB = b.pos.z - g.pos.z;
+                        if (std::sqrt(dxB * dxB + dzB * dzB) < 7.0f) {
+                            g.estado = 1;
+                            g.alvoInvestigar = b.pos;
+                        }
+                    }
+                }
+                continue;
+            }
+
+            if (b.doJogador) {
+                for (auto& g : guardas) {
+                    if (g.vida > 0 && std::fabs(b.pos.x - g.pos.x) < 0.7f && std::fabs(b.pos.z - g.pos.z) < 0.7f) {
+                        b.ativa = false;
+                        // Tiro furtivo (se ele não estava em combate) abate na hora!
+                        g.vida -= (g.estado < 2) ? 100 : 50;
+                        if (g.vida <= 0) { g.vida = 0; g.estado = 0; }
+                    }
+                }
+            } else {
+                if (std::fabs(b.pos.x - posSnake.x) < 0.65f && std::fabs(b.pos.z - posSnake.z) < 0.65f) {
+                    b.ativa = false;
+                    vidaSnake -= 25;
+                }
+            }
+        }
+
+        if (tempoAlertaGlobal > 0) {
+            tempoAlertaGlobal--;
+            if (tempoAlertaGlobal == 0) {
+                for (auto& g : guardas) {
+                    if (g.vida > 0 && g.estado == 2) {
+                        g.estado = 1;
+                        g.alvoInvestigar = posSnake;
+                    }
+                }
+            }
+        }
+                                // Camera fixa sobre o ombro direito estilo Resident Evil 4 Classico
+        float radCam = anguloSnake * DEG2RAD;
+        float dirX = std::sin(radCam);
+        float dirZ = std::cos(radCam);
+        float rightX = -dirZ;
+        float rightZ = dirX;
+
+        float distAtras = 2.45f;
+        float offsetOmbro = 0.58f;
+        float alturaOlhos = agachado ? 1.15f : 1.52f;
+
+        Vector3 alvoCamPos = {
+            posSnake.x - (dirX * distAtras) + (rightX * offsetOmbro),
+            alturaOlhos + 0.12f,
+            posSnake.z - (dirZ * distAtras) + (rightZ * offsetOmbro)
+        };
+
+        if (alvoCamPos.x < -10.5f) alvoCamPos.x = -10.5f;
+        if (alvoCamPos.x >  10.5f) alvoCamPos.x =  10.5f;
+        if (alvoCamPos.z < -38.5f) alvoCamPos.z = -38.5f;
+        if (alvoCamPos.z >  38.5f) alvoCamPos.z =  38.5f;
+
+        camera.position = alvoCamPos;
+        camera.target = {
+            posSnake.x + (dirX * 3.5f) + (rightX * 0.30f),
+            alturaOlhos - 0.12f,
+            posSnake.z + (dirZ * 3.5f) + (rightZ * 0.30f)
+        };
+        camera.up = { 0.0f, 1.0f, 0.0f };
+        camera.fovy = 52.0f;
+
+                float dtAna = GetFrameTime();
+        if (std::abs(eixoX) > 0.15f) anguloSnake -= eixoX * 140.0f * dtAna;
+        if (std::abs(eixoY) > 0.15f) {
+            float radA = anguloSnake * DEG2RAD;
+            float passA = (-eixoY) * (agachado ? 2.2f : 4.2f) * dtAna;
+            float nxA = posSnake.x + std::sin(radA) * passA;
+            float nzA = posSnake.z + std::cos(radA) * passA;
+            if (!pontoBloqueado3D(nxA, posSnake.z, obstaculos)) posSnake.x = nxA;
+            if (!pontoBloqueado3D(posSnake.x, nzA, obstaculos)) posSnake.z = nzA;
+        }
+        SetShaderValue(shaderConsole, viewPosLoc, &camera.position, SHADER_UNIFORM_VEC3);
+         float radLuz = anguloSnake * DEG2RAD;
+        float alturaLuz = agachado ? 0.85f : 1.35f;
+        Vector3 posLanterna = { posSnake.x + std::sin(radLuz) * 0.3f, alturaLuz, posSnake.z + std::cos(radLuz) * 0.3f };
+        Vector3 dirLanterna = { std::sin(radLuz), -0.12f, std::cos(radLuz) };
+        SetShaderValue(shaderConsole, spotPosLoc, &posLanterna, SHADER_UNIFORM_VEC3);
+        SetShaderValue(shaderConsole, spotDirLoc, &dirLanterna, SHADER_UNIFORM_VEC3);
+
+        
+
+        BeginDrawing();
+            ClearBackground(tempoAlertaGlobal > 0 ? Color{ 65, 12, 16, 255 } : Color{ 18, 22, 26, 255 });
+
+            
+                                BeginTextureMode(targetRes);
+        ClearBackground(Color{ 142, 152, 162, 255 });
         BeginMode3D(camera);
             if (optLanterna) BeginShaderMode(shaderConsole);
                 DrawModel(modChao, { 0.0f, 0.0f, 0.0f }, 1.0f, WHITE);
