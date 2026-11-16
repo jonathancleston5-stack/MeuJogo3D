@@ -443,8 +443,8 @@ int main() {
         float sh = (float)GetScreenHeight();
         centroBtnAtirar = { sw - 125.0f, sh - 125.0f };
         centroBtnAgachar = { sw - 115.0f, sh - 105.0f };
-        btnCamera = { sw - 170.0f, 20.0f, 150.0f, 44.0f };
-        Rectangle btnMenuHud = { sw - 335.0f, 20.0f, 150.0f, 44.0f };
+        btnCamera = { -500.0f, -500.0f, 10.0f, 10.0f };
+        Rectangle btnMenuHud = { sw - 170.0f, 20.0f, 150.0f, 44.0f };
 
         if (estadoAtual != TELA_JOGANDO) {
             BeginDrawing();
@@ -628,7 +628,7 @@ int main() {
         }
 
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), btnCamera)) {
-            modoPrimeiraPessoa = !modoPrimeiraPessoa;
+            modoPrimeiraPessoa = false;
         }
 
         float radSnake = anguloSnake * DEG2RAD;
