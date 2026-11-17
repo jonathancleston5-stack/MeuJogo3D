@@ -162,21 +162,15 @@ const char* fsCode =
     "    vec3 toFrag = fragPos - lightPos;\n"
     "    float distLuz = length(toFrag);\n"
     "    float spot = dot(normalize(toFrag), normalize(lightDir));\n"
-    "    float cone = smoothstep(0.72, 0.94, spot);\n"
-    "    float nucleo = smoothstep(0.90, 0.99, spot);\n"
-    "    float atten = clamp(1.0 - distLuz / 16.0, 0.0, 1.0);\n"
+    "    float cone = smoothstep(0.75, 0.94, spot);\n"
+    "    float nucleo = smoothstep(0.91, 0.995, spot);\n"
+    "    float atten = clamp(1.0 - distLuz / 24.0, 0.0, 1.0);\n"
     "    atten = atten * atten;\n"
-    "    float feixe = (cone * 1.6 + nucleo * 1.4) * atten;\n"
-    "    vec3 luzAmbiente = vec3(0.08, 0.09, 0.11);\n"
-    "    vec3 luzLanterna = vec3(1.0, 0.92, 0.72) * feixe;\n"
-    "    vec3 corIluminada = texel.rgb * (luzAmbiente + luzLanterna);\n"
-    "    // Neblina exponencial estilo Silent Hill (fecha 100% antes do fim da rua)\n"
-    "    float fNeblina = clamp((distLuz - 2.5) / 15.5, 0.0, 1.0);\n"
-    "    fNeblina = fNeblina * fNeblina * (3.0 - 2.0 * fNeblina);\n"
-    "    // A luz da lanterna rasga parcialmente a neblina perto do jogador\n"
-    "    fNeblina *= (1.0 - clamp(feixe * 0.45, 0.0, 0.60));\n"
-    "    vec3 corNeblina = vec3(0.45, 0.48, 0.52);\n"
-    "    vec3 finalRgb = mix(corIluminada, corNeblina, fNeblina);\n"
+    "    float feixe = (cone * 1.4 + nucleo * 1.6) * atten;\n"
+    "    // Noite escura (luz ambiente baixa) + cone forte da lanterna\n"
+    "    vec3 luzAmbiente = vec3(0.06, 0.07, 0.10);\n"
+    "    vec3 luzLanterna = vec3(1.0, 0.93, 0.74) * feixe;\n"
+    "    vec3 finalRgb = texel.rgb * (luzAmbiente + luzLanterna);\n"
     "    gl_FragColor = vec4(finalRgb, texel.a);\n"
     "}\n";
 
@@ -234,6 +228,12 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
 }
 
 void desenharRuaSilentHill() {
+    // Muros fechando os becos laterais
+    for (float bz = -40.0f; bz <= 40.0f; bz += 20.0f) {
+        DrawCube(Vector3{ -14.5f, 2.5f, bz }, 1.0f, 5.0f, 12.0f, Color{ 18, 20, 25, 255 });
+        DrawCube(Vector3{  14.5f, 2.5f, bz }, 1.0f, 5.0f, 12.0f, Color{ 18, 20, 25, 255 });
+    }
+
     if (!modelosRuaProntos) {
         Image i1 = GenImageChecked(64, 64, 8, 8, Color{34,36,40,255}, Color{42,44,48,255});
         modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 1, 1));
@@ -296,7 +296,7 @@ void desenharRuaSilentHill() {
             DrawCube(Vector3{ px - l*0.7f, 5.65f, pz }, 1.5f, 0.10f, 0.12f, Color{ 44, 48, 52, 255 });
             // Lampada amarela fraca + cone de luz suave no chao
             DrawCube(Vector3{ px - l*1.3f, 5.55f, pz }, 0.38f, 0.14f, 0.24f, Color{ 255, 225, 140, 255 });
-            DrawSphere(Vector3{ px - l*1.3f, 5.48f, pz }, 0.26f, Color{ 180, 175, 150, 35 });
+            
         }
     }
 
@@ -496,7 +496,7 @@ int main() {
         SetShaderValue(shaderConsole, locLightDir, dirLuz, SHADER_UNIFORM_VEC3);
 
         BeginTextureMode(targetRes);
-        ClearBackground(Color{ 115, 122, 133, 255 });
+        ClearBackground(Color{ 8, 10, 16, 255 });
         BeginMode3D(camera);
             if (optLanterna) BeginShaderMode(shaderConsole);
             desenharRuaSilentHill();
