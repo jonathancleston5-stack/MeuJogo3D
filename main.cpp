@@ -72,11 +72,11 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
     bool andando = (cicloPasso > 0.01f);
     if (animCountHarry > 0 && animsHarry != nullptr) {
         if (andando) {
-            animFrameHarry = (animFrameHarry + 1) % animsHarry[0].frameCount;
+            animFrameHarry = (animFrameHarry + 1) % animsHarry.frameCount;
         } else {
             animFrameHarry = 0;
         }
-        UpdateModelAnimation(modHarry, animsHarry[0], animFrameHarry);
+        UpdateModelAnimation(modHarry, animsHarry, animFrameHarry);
     }
 
     float puloPasso = andando ? std::abs(std::cos(cicloPasso)) * 0.04f : 0.0f;
@@ -89,7 +89,6 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
         rlRotatef(gingado, 0.0f, 0.0f, 1.0f);
         if (agachado) rlRotatef(18.0f, 1.0f, 0.0f, 0.0f);
 
-        // Desenha o Harry Mason 3D centralizado e com os pes no chao
         DrawModelEx(
             modHarry,
             { offsetHarryX, offsetHarryY, offsetHarryZ },
@@ -99,7 +98,6 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             WHITE
         );
 
-        // Desenha a Lanterna PSX amarela na mao/lateral direita apontando para frente
         float altMao = agachado ? 0.68f : 0.92f;
         DrawModelEx(
             modLanternaPSX,
@@ -111,6 +109,58 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
         );
     rlPopMatrix();
 }
+
+const char* vsCode =
+    "#version 100\n"
+    "attribute vec3 vertexPosition;\n"
+    "attribute vec2 vertexTexCoord;\n"
+    "attribute vec4 vertexColor;\n"
+    "uniform mat4 mvp;\n"
+    "uniform mat4 matModel;\n"
+    "varying vec3 fragPos;\n"
+    "varying vec2 fragTexCoord;\n"
+    "varying vec4 fragColor;\n"
+    "void main() {\n"
+    "    fragPos = vec3(matModel * vec4(vertexPosition, 1.0));\n"
+    "    fragTexCoord = vertexTexCoord;\n"
+    "    fragColor = vertexColor;\n"
+    "    gl_Position = mvp * vec4(vertexPosition, 1.0);\n"
+    "}\n";
+
+const char* fsCode =
+    "#version 100\n"
+    "precision mediump float;\n"
+    "varying vec2 fragTexCoord;\n"
+    "varying vec4 fragColor;\n"
+    "varying vec3 fragPos;\n"
+    "uniform sampler2D texture0;\n"
+    "uniform vec3 lightPos;\n"
+    "uniform vec3 lightDir;\n"
+    "uniform int lanternaOn;\n"
+    "void main() {\n"
+    "    vec4 texel = texture2D(texture0, fragTexCoord) * fragColor;\n"
+    "    // Noite bem escura para destacar a lanterna\n"
+    "    vec3 luzTotal = vec3(0.04, 0.05, 0.08);\n"
+    "    if (lanternaOn == 1) {\n"
+    "        vec3 toFrag = fragPos - lightPos;\n"
+    "        float distLuz = length(toFrag);\n"
+    "        float spot = dot(normalize(toFrag), normalize(lightDir));\n"
+    "        float cone = smoothstep(0.65, 0.90, spot);\n"
+    "        float nucleo = smoothstep(0.86, 0.98, spot);\n"
+    "        float atten = clamp(1.0 - distLuz / 28.0, 0.0, 1.0);\n"
+    "        atten = atten * atten;\n"
+    "        float feixe = (cone * 2.8 + nucleo * 3.2) * atten;\n"
+    "        luzTotal += vec3(1.0, 0.95, 0.80) * feixe;\n"
+    "    }\n"
+    "    gl_FragColor = vec4(texel.rgb * luzTotal, texel.a);\n"
+    "}\n";
+
+Model modCarroBase, modCarroTeto;
+bool modCarroPronto = false;
+
+Model modAsfalto, modCalcada, modPredio;
+bool modelosRuaProntos = false;
+
 
 void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
     rlPushMatrix();
