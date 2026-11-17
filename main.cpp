@@ -161,23 +161,35 @@ const char* fsCode =
     "uniform sampler2D texture0;\n"
     "uniform vec3 lightPos;\n"
     "uniform vec3 lightDir;\n"
+    "uniform int lanternaOn;\n"
     "void main() {\n"
     "    vec4 texel = texture2D(texture0, fragTexCoord) * fragColor;\n"
-    "    vec3 toFrag = fragPos - lightPos;\n"
-    "    float distLuz = length(toFrag);\n"
-    "    float spot = dot(normalize(toFrag), normalize(lightDir));\n"
-    "    float cone = smoothstep(0.75, 0.94, spot);\n"
-    "    float nucleo = smoothstep(0.91, 0.995, spot);\n"
-    "    float atten = clamp(1.0 - distLuz / 24.0, 0.0, 1.0);\n"
-    "    atten = atten * atten;\n"
-    "    float feixe = (cone * 1.4 + nucleo * 1.6) * atten;\n"
-    "    // Noite escura (luz ambiente baixa) + cone forte da lanterna\n"
-    "    vec3 luzAmbiente = vec3(0.06, 0.07, 0.10);\n"
-    "    vec3 luzLanterna = vec3(1.0, 0.93, 0.74) * feixe;\n"
-    "    vec3 finalRgb = texel.rgb * (luzAmbiente + luzLanterna);\n"
-    "    gl_FragColor = vec4(finalRgb, texel.a);\n"
+    "    vec3 luzTotal = vec3(0.08, 0.09, 0.13);\n"
+    "    // 1. Lanterna do jogador (liga/desliga no botao Y)\n"
+    "    if (lanternaOn == 1) {\n"
+    "        vec3 toFrag = fragPos - lightPos;\n"
+    "        float distLuz = length(toFrag);\n"
+    "        float spot = dot(normalize(toFrag), normalize(lightDir));\n"
+    "        float cone = smoothstep(0.68, 0.92, spot);\n"
+    "        float nucleo = smoothstep(0.88, 0.99, spot);\n"
+    "        float atten = clamp(1.0 - distLuz / 26.0, 0.0, 1.0);\n"
+    "        atten = atten * atten;\n"
+    "        float feixe = (cone * 2.2 + nucleo * 2.5) * atten;\n"
+    "        luzTotal += vec3(1.0, 0.94, 0.78) * feixe;\n"
+    "    }\n"
+    "    // 2. Luzes dos postes ao longo da rua (a cada 16m em Z, X = +-6.8)\n"
+    "    for (float pz = -32.0; pz <= 32.0; pz += 16.0) {\n"
+    "        float dEsq = length(fragPos - vec3(-6.8, 4.8, pz));\n"
+    "        float dDir = length(fragPos - vec3( 6.8, 4.8, pz));\n"
+    "        float pEsq = clamp(1.0 - dEsq / 11.5, 0.0, 1.0);\n"
+    "        float pDir = clamp(1.0 - dDir / 11.5, 0.0, 1.0);\n"
+    "        luzTotal += vec3(1.0, 0.80, 0.45) * (pEsq * pEsq + pDir * pDir) * 0.85;\n"
+    "    }\n"
+    "    gl_FragColor = vec4(texel.rgb * luzTotal, texel.a);\n"
     "}\n";
 
+Model modCarroBase, modCarroTeto;
+bool modCarroPronto = false;
 Model modAsfalto, modCalcada, modPredio;
 bool modelosRuaProntos = false;
 
@@ -195,12 +207,22 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
         Color corLanternaT = { 120, 22, 22, 255 };
         Color corContorno  = { 10, 12, 15, 255 };
 
-        // Base / Chassi inferior
-        DrawCube({ 0.0f, 0.52f, 0.0f }, 1.92f, 0.56f, 4.20f, corLataria);
+        if (!modCarroPronto) {
+            Texture2D texFerr = LoadTexture("ferrugem.png");
+            SetTextureWrap(texFerr, TEXTURE_WRAP_REPEAT);
+            SetTextureFilter(texFerr, TEXTURE_FILTER_POINT);
+            modCarroBase = LoadModelFromMesh(GenMeshCube(1.92f, 0.56f, 4.20f));
+            modCarroBase.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texFerr;
+            modCarroTeto = LoadModelFromMesh(GenMeshCube(1.66f, 0.52f, 2.25f));
+            modCarroTeto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texFerr;
+            modCarroPronto = true;
+        }
+        // Base / Chassi inferior texturizado
+        DrawModel(modCarroBase, { 0.0f, 0.52f, 0.0f }, 1.0f, corLataria);
         DrawCubeWires({ 0.0f, 0.52f, 0.0f }, 1.92f, 0.56f, 4.20f, corContorno);
 
-        // Cabine / Teto
-        DrawCube({ 0.0f, 1.05f, -0.15f }, 1.66f, 0.52f, 2.25f, corLataria);
+        // Cabine / Teto texturizado
+        DrawModel(modCarroTeto, { 0.0f, 1.05f, -0.15f }, 1.0f, corLataria);
         DrawCubeWires({ 0.0f, 1.05f, -0.15f }, 1.66f, 0.52f, 2.25f, corContorno);
 
         // Vidros (Para-brisa, traseiro e laterais)
@@ -532,6 +554,8 @@ int main() {
         float dirLuz[3] = { dirX, -0.16f, dirZ };
         SetShaderValue(shaderConsole, locLightPos, posLuz, SHADER_UNIFORM_VEC3);
         SetShaderValue(shaderConsole, locLightDir, dirLuz, SHADER_UNIFORM_VEC3);
+                int intLanterna = optLanterna ? 1 : 0;
+                SetShaderValue(shaderConsole, GetShaderLocation(shaderConsole, "lanternaOn"), &intLanterna, SHADER_UNIFORM_INT);
 
         BeginTextureMode(targetRes);
         ClearBackground(Color{ 8, 10, 16, 255 });
