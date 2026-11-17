@@ -35,6 +35,8 @@ void carregarConfig(bool &lanterna, int &fps, bool &som, bool &showFps, int &niv
 }
 
 Shader shaderConsole;
+Model modQuarteirao;
+bool quarteiraoPronto = false;
 Model modLuaOlho;
 Texture2D texLuaOlho;
 float escalaLuaOlho = 1.0f;
@@ -340,33 +342,41 @@ void desenharRuaSilentHill() {
     DrawCube(Vector3{  18.0f, 0.05f, 0.0f }, 16.0f, 0.10f, 80.0f, Color{ 14, 16, 18, 255 });
 
     // Predios separados por becos escuros (espacos de 4m a 5m entre eles)
-    struct Predio { float x, z, w, h, d; Color cor; };
-    Predio ps[] = {
-        {-15.2f,-28.0f,9.5f,16.0f,13.0f,{76,80,84,255}}, {-15.2f,-10.0f,9.5f,21.0f,13.5f,{88,82,78,255}},
-        {-15.2f,  9.0f,9.5f,14.0f,14.0f,{70,76,82,255}}, {-15.2f, 28.0f,9.5f,19.0f,13.0f,{82,80,76,255}},
-        { 15.2f,-27.0f,9.5f,18.0f,13.5f,{80,78,74,255}}, { 15.2f, -8.0f,9.5f,15.0f,13.0f,{68,74,80,255}},
-        { 15.2f, 10.0f,9.5f,22.0f,13.5f,{85,80,76,255}}, { 15.2f, 28.0f,9.5f,16.0f,13.0f,{74,78,84,255}}
-    };
-    for (int i = 0; i < 8; i++) {
-        DrawModelEx(modPredio, Vector3{ ps[i].x, ps[i].h/2.0f, ps[i].z }, Vector3{0,1,0}, 0.0f, Vector3{ ps[i].w, ps[i].h, ps[i].d }, ps[i].cor);
-        float fx = (ps[i].x < 0) ? (ps[i].x + ps[i].w/2.0f + 0.04f) : (ps[i].x - ps[i].w/2.0f - 0.04f);
-        int idxJ = 0;
-        for (float wy = 3.5f; wy < ps[i].h - 2.0f; wy += 3.2f) {
-            for (float wz = ps[i].z - ps[i].d/2.0f + 2.2f; wz <= ps[i].z + ps[i].d/2.0f - 2.2f; wz += 3.2f) {
-                idxJ++;
-                // Vidros quebrados: deixa estilhacos pontudos nas bordas em varias janelas
-                DrawCube(Vector3{ fx, wy, wz }, 0.08f, 1.5f, 1.1f, Color{ 14, 16, 20, 255 });
-                if ((idxJ + i) % 2 == 0) {
-                    DrawCube(Vector3{ fx + (ps[i].x < 0 ? 0.02f : -0.02f), wy + 0.52f, wz - 0.30f }, 0.05f, 0.42f, 0.45f, Color{ 115, 130, 140, 190 });
-                    DrawCube(Vector3{ fx + (ps[i].x < 0 ? 0.02f : -0.02f), wy - 0.48f, wz + 0.28f }, 0.05f, 0.48f, 0.42f, Color{ 115, 130, 140, 190 });
-                } else {
-                    DrawCube(Vector3{ fx + (ps[i].x < 0 ? 0.01f : -0.01f), wy, wz }, 0.04f, 1.42f, 1.02f, Color{ 68, 78, 86, 210 });
-                }
-            }
+        // Predios 3D reais (quarteirao.glb) nos dois lados da avenida
+    if (!quarteiraoPronto) {
+        modQuarteirao = LoadModel("quarteirao.glb");
+        for (int i = 0; i < modQuarteirao.materialCount; i++) {
+            modQuarteirao.materials[i].shader = shaderConsole;
         }
+        quarteiraoPronto = true;
     }
 
-            // Rua limpa sem postes
+    if (modQuarteirao.meshCount > 0) {
+        float posZPredios[8] = { -30.0f, -12.0f, 6.0f, 24.0f, -28.0f, -10.0f, 8.0f, 26.0f };
+        float posXPredios[8] = { -14.8f, -14.8f, -14.8f, -14.8f, 14.8f, 14.8f, 14.8f, 14.8f };
+        float rotYPredios[8] = { 90.0f, 90.0f, 90.0f, 90.0f, -90.0f, -90.0f, -90.0f, -90.0f };
+
+        for (int i = 0; i < 8; i++) {
+            int mIdx = i % modQuarteirao.meshCount;
+            BoundingBox bb = GetMeshBoundingBox(modQuarteirao.meshes[mIdx]);
+            float alt = bb.max.y - bb.min.y;
+            float larg = std::max(bb.max.x - bb.min.x, bb.max.z - bb.min.z);
+            float esc = (alt > 0.01f) ? (13.5f / alt) : 1.0f;
+            if (larg * esc > 16.5f) esc = 16.5f / larg;
+
+            float cx = (bb.min.x + bb.max.x) * 0.5f;
+            float cz = (bb.min.z + bb.max.z) * 0.5f;
+
+            Matrix mat = MatrixIdentity();
+            mat = MatrixMultiply(mat, MatrixTranslate(-cx, -bb.min.y, -cz));
+            mat = MatrixMultiply(mat, MatrixScale(esc, esc, esc));
+            mat = MatrixMultiply(mat, MatrixRotateY(rotYPredios[i] * DEG2RAD));
+            mat = MatrixMultiply(mat, MatrixTranslate(posXPredios[i], 0.0f, posZPredios[i]));
+
+            int matIdx = modQuarteirao.meshMaterial[mIdx];
+            DrawMesh(modQuarteirao.meshes[mIdx], modQuarteirao.materials[matIdx], mat);
+        }
+    }
     desenharCarroAbandonado(-2.8f, -14.0f,  14.0f, Color{ 82, 46, 42, 255 });
     desenharCarroAbandonado( 2.9f,   7.5f, -165.0f, Color{ 52, 64, 72, 255 });
     desenharCarroAbandonado(-2.4f,  23.0f,  -8.0f, Color{ 76, 74, 62, 255 });
