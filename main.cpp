@@ -208,7 +208,7 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
         float comp = std::max(bb.max.x - bb.min.x, bb.max.z - bb.min.z);
         if (comp > 0.01f) {
             escalaCarroPS1 = 4.35f / comp;
-            offsetCarroY   = -bb.min.y * escalaCarroPS1 + 0.11f;
+            offsetCarroY   = -bb.min.y * escalaCarroPS1;
         }
         BoundingBox bbW = GetModelBoundingBox(modCarWheel);
         float diamW = bbW.max.y - bbW.min.y;
@@ -237,15 +237,7 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
             DrawModelEx(modCarSedan, { 0.0f, offsetCarroY, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { escalaCarroPS1, escalaCarroPS1, escalaCarroPS1 }, WHITE);
         }
 
-        // 4 Rodas 3D PS1 alinhadas nos para-lamas
-        float rx = 0.71f;
-        float rzF = 1.28f;
-        float rzT = -1.26f;
-        float ry = 0.275f;
-        DrawModelEx(modCarWheel, { -rx, ry, rzF }, { 0.0f, 1.0f, 0.0f }, 180.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
-        DrawModelEx(modCarWheel, {  rx, ry, rzF }, { 0.0f, 1.0f, 0.0f },   0.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
-        DrawModelEx(modCarWheel, { -rx, ry, rzT }, { 0.0f, 1.0f, 0.0f }, 180.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
-        DrawModelEx(modCarWheel, {  rx, ry, rzT }, { 0.0f, 1.0f, 0.0f },   0.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
+        // Rodas originais do modelo ja embutidas
     rlPopMatrix();
 }
 
@@ -258,17 +250,17 @@ void desenharLuaOlho(Vector3 posJogador) {
 
         BoundingBox bb = GetModelBoundingBox(modLuaOlho);
         float diam = std::max({bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z});
-        if (diam > 0.001f) escalaLuaOlho = 14.0f / diam;
+        if (diam > 0.001f) escalaLuaOlho = 11.0f / diam;
         luaOlhoPronta = true;
     }
 
     // Posicao relativa ao jogador para parecer distante no horizonte como uma lua real
-    Vector3 posLua = { posJogador.x + 7.5f, 24.0f, posJogador.z - 55.0f };
+    Vector3 posLua = { posJogador.x + 4.5f, 14.0f, posJogador.z - 52.0f };
     float olharX = (posJogador.x - posLua.x) * 0.45f;
 
     rlPushMatrix();
         rlTranslatef(posLua.x, posLua.y, posLua.z);
-        rlRotatef(22.0f, 1.0f, 0.0f, 0.0f);
+        rlRotatef(12.0f, 1.0f, 0.0f, 0.0f);
         rlRotatef(olharX, 0.0f, 1.0f, 0.0f);
         DrawModelEx(
             modLuaOlho,
