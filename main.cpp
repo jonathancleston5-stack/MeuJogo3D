@@ -163,14 +163,15 @@ const char* fsCode =
     "    vec3 toFrag = fragPos - lightPos;\n"
     "    float dist = length(toFrag);\n"
     "    float spot = dot(normalize(toFrag), normalize(lightDir));\n"
-    "    float cone = smoothstep(0.68, 0.96, spot); float nucleo = smoothstep(0.88, 0.99, spot);\n"
+    "    float cone = smoothstep(0.74, 0.96, spot); float nucleo = smoothstep(0.90, 0.995, spot);\n"
     "    float atten = clamp(1.0 - dist / 22.0, 0.0, 1.0);\n"
-    "    float luz = 0.14 + (cone * atten * 0.85) + (nucleo * atten * 0.55);\n"
+    "    float feixe = (cone * 1.15 + nucleo * 0.95) * atten;
+        vec3 corLuz = vec3(0.10, 0.11, 0.13) + vec3(1.0, 0.93, 0.76) * feixe;\n"
     "    // Becos laterais bem escuros quando longe da avenida central\n"
-    "    if (abs(fragPos.x) > 10.6) luz *= 0.35;\n"
+    "    if (abs(fragPos.x) > 10.6) corLuz *= 0.45;\n"
     "    // Neblina estilo Silent Hill (densa e cinza-azulada)\n"
-    "    float neblina = clamp((dist - 5.5) / 16.5, 0.0, 0.98);\n"
-    "    vec3 finalRgb = mix(texel.rgb * luz, vec3(0.42, 0.46, 0.50), neblina);\n"
+    "    float neblina = smoothstep(3.5, 25.0, dist) * (1.0 - clamp(feixe * 0.55, 0.0, 0.65));\n"
+    "    vec3 finalRgb = mix(texel.rgb * corLuz, vec3(0.38, 0.42, 0.46), neblina);\n"
     "    gl_FragColor = vec4(finalRgb, texel.a);\n"
     "}\n";
 
@@ -484,13 +485,13 @@ int main() {
         camera.position = alvoCam;
         camera.target = { posHeroi.x + (dirX * 3.5f) + (rightX * 0.30f), altOlhos - 0.12f, posHeroi.z + (dirZ * 3.5f) + (rightZ * 0.30f) };
 
-        float posLuz[3] = { posHeroi.x + (rightX * 0.32f) + (dirX * 0.25f), altOlhos - 0.25f, posHeroi.z + (rightZ * 0.32f) + (dirZ * 0.25f) };
-        float dirLuz[3] = { dirX, -0.10f, dirZ };
+        float posLuz[3] = { posHeroi.x - (rightX * 0.15f) + (dirX * 0.22f), altOlhos - 0.32f, posHeroi.z - (rightZ * 0.15f) + (dirZ * 0.22f) };
+        float dirLuz[3] = { dirX, -0.16f, dirZ };
         SetShaderValue(shaderConsole, locLightPos, posLuz, SHADER_UNIFORM_VEC3);
         SetShaderValue(shaderConsole, locLightDir, dirLuz, SHADER_UNIFORM_VEC3);
 
         BeginTextureMode(targetRes);
-        ClearBackground(Color{ 107, 117, 128, 255 });
+        ClearBackground(Color{ 97, 107, 117, 255 });
         BeginMode3D(camera);
             if (optLanterna) BeginShaderMode(shaderConsole);
             desenharRuaSilentHill();
