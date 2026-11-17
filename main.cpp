@@ -72,7 +72,7 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
     bool andando = (cicloPasso > 0.01f);
     if (animCountHarry > 0 && animsHarry != nullptr) {
         if (andando) {
-            animFrameHarry = (animFrameHarry + 1) % animsHarry[0].frameCount;
+            animFrameHarry = (animFrameHarry + 1) % animsHarry[0].keyframeCount;
         } else {
             animFrameHarry = 0;
         }
