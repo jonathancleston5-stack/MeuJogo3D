@@ -282,6 +282,8 @@ void desenharRuaSilentHill() {
         UnloadImage(i2);
         Image i3 = GenImageChecked(32, 32, 4, 8, Color{72,76,80,255}, Color{60,64,68,255});
         modPredio = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
+        Texture2D texParede = LoadTexture("parede.png");
+        SetTextureWrap(texParede, TEXTURE_WRAP_REPEAT);
         modPredio.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texParede;
         modelosRuaProntos = true;
     }
