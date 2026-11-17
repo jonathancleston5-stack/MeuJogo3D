@@ -33,6 +33,10 @@ void carregarConfig(bool &lanterna, int &fps, bool &som, bool &showFps, int &niv
     }
 }
 
+Model modPoste, modLanterna;
+float escalaPoste = 1.0f, escalaLanterna = 1.0f;
+bool modelosExtrasProntos = false;
+
 void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachado) {
     rlPushMatrix();
         rlTranslatef(pos.x, pos.y, pos.z);
@@ -202,9 +206,7 @@ const char* fsCode =
 
 Model modCarroBase, modCarroTeto;
 bool modCarroPronto = false;
-Model modPoste, modLanterna;
-float escalaPoste = 1.0f, escalaLanterna = 1.0f;
-bool modelosExtrasProntos = false;
+
 Model modAsfalto, modCalcada, modPredio;
 bool modelosRuaProntos = false;
 
