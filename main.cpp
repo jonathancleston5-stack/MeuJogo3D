@@ -151,27 +151,32 @@ const char* vsCode =
 const char* fsCode =
     "#version 100\n"
     "precision mediump float;\n"
-    "varying vec3 fragPos;\n"
     "varying vec2 fragTexCoord;\n"
     "varying vec4 fragColor;\n"
+    "varying vec3 fragPos;\n"
     "uniform sampler2D texture0;\n"
-    "uniform vec4 colDiffuse;\n"
     "uniform vec3 lightPos;\n"
     "uniform vec3 lightDir;\n"
     "void main() {\n"
-    "    vec4 texel = texture2D(texture0, fragTexCoord) * colDiffuse * fragColor;\n"
+    "    vec4 texel = texture2D(texture0, fragTexCoord) * fragColor;\n"
     "    vec3 toFrag = fragPos - lightPos;\n"
-    "    float dist = length(toFrag);\n"
+    "    float distLuz = length(toFrag);\n"
     "    float spot = dot(normalize(toFrag), normalize(lightDir));\n"
-    "    float cone = smoothstep(0.74, 0.96, spot); float nucleo = smoothstep(0.90, 0.995, spot);\n"
-    "    float atten = clamp(1.0 - dist / 22.0, 0.0, 1.0);\n"
-    "    float feixe = (cone * 1.15 + nucleo * 0.95) * atten;\n"
-        "        vec3 corLuz = vec3(0.10, 0.11, 0.13) + vec3(1.0, 0.93, 0.76) * feixe;\n"
-    "    // Becos laterais bem escuros quando longe da avenida central\n"
-    "    if (abs(fragPos.x) > 10.6) corLuz *= 0.45;\n"
-    "    // Neblina estilo Silent Hill (densa e cinza-azulada)\n"
-    "    float neblina = smoothstep(3.5, 25.0, dist) * (1.0 - clamp(feixe * 0.55, 0.0, 0.65));\n"
-    "    vec3 finalRgb = mix(texel.rgb * corLuz, vec3(0.38, 0.42, 0.46), neblina);\n"
+    "    float cone = smoothstep(0.72, 0.94, spot);\n"
+    "    float nucleo = smoothstep(0.90, 0.99, spot);\n"
+    "    float atten = clamp(1.0 - distLuz / 16.0, 0.0, 1.0);\n"
+    "    atten = atten * atten;\n"
+    "    float feixe = (cone * 1.6 + nucleo * 1.4) * atten;\n"
+    "    vec3 luzAmbiente = vec3(0.08, 0.09, 0.11);\n"
+    "    vec3 luzLanterna = vec3(1.0, 0.92, 0.72) * feixe;\n"
+    "    vec3 corIluminada = texel.rgb * (luzAmbiente + luzLanterna);\n"
+    "    // Neblina exponencial estilo Silent Hill (fecha 100% antes do fim da rua)\n"
+    "    float fNeblina = clamp((distLuz - 2.5) / 15.5, 0.0, 1.0);\n"
+    "    fNeblina = fNeblina * fNeblina * (3.0 - 2.0 * fNeblina);\n"
+    "    // A luz da lanterna rasga parcialmente a neblina perto do jogador\n"
+    "    fNeblina *= (1.0 - clamp(feixe * 0.45, 0.0, 0.60));\n"
+    "    vec3 corNeblina = vec3(0.45, 0.48, 0.52);\n"
+    "    vec3 finalRgb = mix(corIluminada, corNeblina, fNeblina);\n"
     "    gl_FragColor = vec4(finalRgb, texel.a);\n"
     "}\n";
 
@@ -291,7 +296,7 @@ void desenharRuaSilentHill() {
             DrawCube(Vector3{ px - l*0.7f, 5.65f, pz }, 1.5f, 0.10f, 0.12f, Color{ 44, 48, 52, 255 });
             // Lampada amarela fraca + cone de luz suave no chao
             DrawCube(Vector3{ px - l*1.3f, 5.55f, pz }, 0.38f, 0.14f, 0.24f, Color{ 255, 225, 140, 255 });
-            DrawSphere(Vector3{ px - l*1.3f, 5.48f, pz }, 0.26f, Color{ 255, 225, 145, 55 });
+            DrawSphere(Vector3{ px - l*1.3f, 5.48f, pz }, 0.26f, Color{ 180, 175, 150, 35 });
         }
     }
 
@@ -491,7 +496,7 @@ int main() {
         SetShaderValue(shaderConsole, locLightDir, dirLuz, SHADER_UNIFORM_VEC3);
 
         BeginTextureMode(targetRes);
-        ClearBackground(Color{ 97, 107, 117, 255 });
+        ClearBackground(Color{ 115, 122, 133, 255 });
         BeginMode3D(camera);
             if (optLanterna) BeginShaderMode(shaderConsole);
             desenharRuaSilentHill();
