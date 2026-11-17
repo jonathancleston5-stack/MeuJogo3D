@@ -56,9 +56,7 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             offsetHarryX = -((bb.min.x + bb.max.x) * 0.5f) * escalaHarry;
             offsetHarryZ = -((bb.min.z + bb.max.z) * 0.5f) * escalaHarry;
         }
-        for (int i = 0; i < modHarry.materialCount; i++) {
-            modHarry.materials[i].shader = shaderConsole;
-        }
+        // Mantem shader padrao no Harry com leve tonalidade noturna para ver a jaqueta
         animsHarry = LoadModelAnimations("harry.glb", &animCountHarry);
 
         modLanternaPSX = LoadModel("lanterna_psx.glb");
@@ -95,17 +93,17 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             { 0.0f, 1.0f, 0.0f },
             0.0f,
             { escalaHarry, escalaY, escalaHarry },
-            WHITE
+            Color{ 145, 150, 165, 255 }
         );
 
-        float altMao = agachado ? 0.68f : 0.92f;
+        float altMao = agachado ? 0.64f : 0.88f;
         DrawModelEx(
             modLanternaPSX,
-            { 0.28f, altMao, 0.16f },
-            { 1.0f, 0.0f, 0.0f },
-            90.0f,
+            { 0.21f, altMao, 0.12f },
+            { 0.0f, 1.0f, 0.0f },
+            0.0f,
             { escalaLanternaPSX, escalaLanternaPSX, escalaLanternaPSX },
-            WHITE
+            Color{ 200, 200, 200, 255 }
         );
     rlPopMatrix();
 }
@@ -149,7 +147,7 @@ const char* fsCode =
     "        float nucleo = smoothstep(0.86, 0.98, spot);\n"
     "        float atten = clamp(1.0 - distLuz / 28.0, 0.0, 1.0);\n"
     "        atten = atten * atten;\n"
-    "        float feixe = (cone * 2.8 + nucleo * 3.2) * atten;\n"
+    "        float feixe = clamp((cone * 1.4 + nucleo * 1.3) * atten, 0.0, 2.1);\n"
     "        luzTotal += vec3(1.0, 0.95, 0.80) * feixe;\n"
     "    }\n"
     "    gl_FragColor = vec4(texel.rgb * luzTotal, texel.a);\n"
