@@ -1,3 +1,4 @@
+#include <cstring>
 #include <algorithm>
 #include "raylib.h"
 #include "rlgl.h"
@@ -60,9 +61,9 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
         }
         animsHarry = LoadModelAnimations("personagem.gltf", &animCountHarry);
         for (int i = 0; i < animCountHarry; i++) {
-            std::string nome(animsHarry[i].name);
-            if (nome.find("Walk") != std::string::npos || nome.find("walk") != std::string::npos) idxWalk = i;
-            if (nome.find("Idle") != std::string::npos || nome.find("idle") != std::string::npos) idxIdle = i;
+            const char* nm = animsHarry[i].name;
+            if (std::strstr(nm, "Walk") != nullptr || std::strstr(nm, "walk") != nullptr) idxWalk = i;
+            if (std::strstr(nm, "Idle") != nullptr || std::strstr(nm, "idle") != nullptr) idxIdle = i;
         }
 
         modLanternaPSX = LoadModel("lanterna_psx.glb");
@@ -76,6 +77,7 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
     bool andando = (cicloPasso > 0.01f);
     if (animCountHarry > 0 && animsHarry != nullptr) {
         int animAtual = andando ? idxWalk : idxIdle;
+        if (animAtual >= animCountHarry) animAtual = 0;
         timerAnimHarry += GetFrameTime() * (andando ? (agachado ? 22.0f : 32.0f) : 24.0f);
         if (animsHarry[animAtual].keyframeCount > 0) {
             animFrameHarry = ((int)timerAnimHarry) % animsHarry[animAtual].keyframeCount;
