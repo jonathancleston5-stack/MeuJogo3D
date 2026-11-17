@@ -339,47 +339,7 @@ void desenharRuaSilentHill() {
     DrawCube(Vector3{ -18.0f, 0.05f, 0.0f }, 16.0f, 0.10f, 80.0f, Color{ 14, 16, 18, 255 });
     DrawCube(Vector3{  18.0f, 0.05f, 0.0f }, 16.0f, 0.10f, 80.0f, Color{ 14, 16, 18, 255 });
 
-    // Predios separados por becos escuros (espacos de 4m a 5m entre eles)
-        // Predios 3D reais (quarteirao.glb) nos dois lados da avenida
-    if (!quarteiraoPronto) {
-        modQuarteirao = LoadModel("quarteirao.glb");
-        Texture2D texFallback = LoadTexture("parede.png");
-        SetTextureWrap(texFallback, TEXTURE_WRAP_REPEAT);
-        for (int i = 0; i < modQuarteirao.materialCount; i++) {
-            if (modQuarteirao.materials[i].maps[MATERIAL_MAP_DIFFUSE].texture.id <= 1) {
-                modQuarteirao.materials[i].maps[MATERIAL_MAP_DIFFUSE].texture = texFallback;
-            }
-            modQuarteirao.materials[i].shader = shaderConsole;
-        }
-        quarteiraoPronto = true;
-    }
-
-    if (modQuarteirao.meshCount > 0) {
-        float posZPredios[8] = { -30.0f, -12.0f, 6.0f, 24.0f, -28.0f, -10.0f, 8.0f, 26.0f };
-        float posXPredios[8] = { -13.6f, -13.6f, -13.6f, -13.6f, 13.6f, 13.6f, 13.6f, 13.6f };
-        float rotYPredios[8] = { 90.0f, 90.0f, 90.0f, 90.0f, -90.0f, -90.0f, -90.0f, -90.0f };
-
-        for (int i = 0; i < 8; i++) {
-            int mIdx = i % modQuarteirao.meshCount;
-            BoundingBox bb = GetMeshBoundingBox(modQuarteirao.meshes[mIdx]);
-            float alt = bb.max.y - bb.min.y;
-            float larg = std::max(bb.max.x - bb.min.x, bb.max.z - bb.min.z);
-            float esc = (alt > 0.01f) ? (13.5f / alt) : 1.0f;
-            if (larg * esc > 16.5f) esc = 16.5f / larg;
-
-            float cx = (bb.min.x + bb.max.x) * 0.5f;
-            float cz = (bb.min.z + bb.max.z) * 0.5f;
-
-            Matrix mat = MatrixIdentity();
-            mat = MatrixMultiply(mat, MatrixTranslate(-cx, -bb.min.y, -cz));
-            mat = MatrixMultiply(mat, MatrixScale(esc, esc, esc));
-            mat = MatrixMultiply(mat, MatrixRotateY(rotYPredios[i] * DEG2RAD));
-            mat = MatrixMultiply(mat, MatrixTranslate(posXPredios[i], 0.0f, posZPredios[i]));
-
-            int matIdx = modQuarteirao.meshMaterial[mIdx];
-            DrawMesh(modQuarteirao.meshes[mIdx], modQuarteirao.materials[matIdx], mat);
-        }
-    }
+    // Estruturas removidas
     desenharCarroAbandonado(-2.8f, -14.0f,  14.0f, Color{ 82, 46, 42, 255 });
     desenharCarroAbandonado( 2.9f,   7.5f, -165.0f, Color{ 52, 64, 72, 255 });
     desenharCarroAbandonado(-2.4f,  23.0f,  -8.0f, Color{ 76, 74, 62, 255 });
