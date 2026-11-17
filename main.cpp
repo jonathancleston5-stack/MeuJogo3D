@@ -222,8 +222,10 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
             SetTextureFilter(texFerr, TEXTURE_FILTER_POINT);
             modCarroBase = LoadModelFromMesh(GenMeshCube(1.92f, 0.56f, 4.20f));
             modCarroBase.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texFerr;
+            modCarroBase.materials[0].shader = shaderConsole;
             modCarroTeto = LoadModelFromMesh(GenMeshCube(1.66f, 0.52f, 2.25f));
             modCarroTeto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texFerr;
+            modCarroTeto.materials[0].shader = shaderConsole;
             modCarroPronto = true;
         }
         // Base / Chassi inferior texturizado
@@ -316,6 +318,7 @@ void desenharRuaSilentHill() {
         Texture2D texParede = LoadTexture("parede.png");
         SetTextureWrap(texParede, TEXTURE_WRAP_REPEAT);
         modPredio.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texParede;
+        modPredio.materials[0].shader = shaderConsole;
         modelosRuaProntos = true;
     }
 
