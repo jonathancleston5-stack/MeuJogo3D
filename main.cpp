@@ -34,175 +34,83 @@ void carregarConfig(bool &lanterna, int &fps, bool &som, bool &showFps, int &niv
 }
 
 Shader shaderConsole;
+Model modHarry, modLanternaPSX;
+float escalaHarry = 1.0f, offsetHarryY = 0.0f, offsetHarryX = 0.0f, offsetHarryZ = 0.0f;
+float escalaLanternaPSX = 1.0f;
+bool harryPronto = false;
+ModelAnimation *animsHarry = nullptr;
+int animCountHarry = 0;
+int animFrameHarry = 0;
 Model modPoste, modLanterna;
 float escalaPoste = 1.0f, escalaLanterna = 1.0f;
 bool modelosExtrasProntos = false;
 
 void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachado) {
+    if (!harryPronto) {
+        modHarry = LoadModel("harry.glb");
+        BoundingBox bb = GetModelBoundingBox(modHarry);
+        float alt = bb.max.y - bb.min.y;
+        if (alt > 0.001f) {
+            escalaHarry = 1.75f / alt;
+            offsetHarryY = -bb.min.y * escalaHarry;
+            offsetHarryX = -((bb.min.x + bb.max.x) * 0.5f) * escalaHarry;
+            offsetHarryZ = -((bb.min.z + bb.max.z) * 0.5f) * escalaHarry;
+        }
+        for (int i = 0; i < modHarry.materialCount; i++) {
+            modHarry.materials[i].shader = shaderConsole;
+        }
+        animsHarry = LoadModelAnimations("harry.glb", &animCountHarry);
+
+        modLanternaPSX = LoadModel("lanterna_psx.glb");
+        BoundingBox bbL = GetModelBoundingBox(modLanternaPSX);
+        float tamL = std::max({bbL.max.x - bbL.min.x, bbL.max.y - bbL.min.y, bbL.max.z - bbL.min.z});
+        if (tamL > 0.001f) escalaLanternaPSX = 0.28f / tamL;
+
+        harryPronto = true;
+    }
+
+    bool andando = (cicloPasso > 0.01f);
+    if (animCountHarry > 0 && animsHarry != nullptr) {
+        if (andando) {
+            animFrameHarry = (animFrameHarry + 1) % animsHarry[0].frameCount;
+        } else {
+            animFrameHarry = 0;
+        }
+        UpdateModelAnimation(modHarry, animsHarry[0], animFrameHarry);
+    }
+
+    float puloPasso = andando ? std::abs(std::cos(cicloPasso)) * 0.04f : 0.0f;
+    float gingado   = andando ? std::sin(cicloPasso) * 3.5f : 0.0f;
+    float escalaY   = agachado ? (escalaHarry * 0.72f) : escalaHarry;
+
     rlPushMatrix();
-        rlTranslatef(pos.x, pos.y, pos.z);
+        rlTranslatef(pos.x, pos.y + puloPasso, pos.z);
         rlRotatef(angulo, 0.0f, 1.0f, 0.0f);
+        rlRotatef(gingado, 0.0f, 0.0f, 1.0f);
+        if (agachado) rlRotatef(18.0f, 1.0f, 0.0f, 0.0f);
 
-        Color corJaqueta   = { 48, 62, 74, 255 };
-        Color corCamiseta  = { 210, 212, 208, 255 };
-        Color corJeans     = { 32, 44, 68, 255 };
-        Color corPele      = { 215, 178, 148, 255 };
-        Color corCabelo    = { 58, 40, 28, 255 };
-        Color corSapato    = { 38, 28, 22, 255 };
-        Color corContorno  = { 12, 14, 18, 255 };
+        // Desenha o Harry Mason 3D centralizado e com os pes no chao
+        DrawModelEx(
+            modHarry,
+            { offsetHarryX, offsetHarryY, offsetHarryZ },
+            { 0.0f, 1.0f, 0.0f },
+            0.0f,
+            { escalaHarry, escalaY, escalaHarry },
+            WHITE
+        );
 
-        bool andando = (cicloPasso > 0.01f);
-        float tempo = (float)GetTime();
-
-        float balancoPerna  = andando ? std::sin(cicloPasso) * (agachado ? 18.0f : 32.0f) : 0.0f;
-        float balancoBraco  = andando ? std::sin(cicloPasso) * 26.0f : std::sin(tempo * 2.0f) * 2.5f;
-        float puloPasso     = andando ? std::abs(std::cos(cicloPasso)) * 0.045f : 0.0f;
-        float respiracao    = !andando ? std::sin(tempo * 2.6f) * 0.015f : 0.0f;
-        float gingadoTronco = andando ? std::sin(cicloPasso) * 4.5f : 0.0f;
-
-        float alturaQuadril    = agachado ? 0.52f : (0.78f + puloPasso);
-        float inclinacaoTronco = agachado ? 22.0f : (andando ? 6.0f : 0.0f);
-
-        // Sombra de contato nos pes do personagem
-        DrawCylinder(Vector3{ 0.0f, 0.01f, 0.0f }, 0.42f, 0.42f, 0.01f, 12, Color{ 0, 0, 0, 140 });
-
-        // Perna Esquerda
-        rlPushMatrix();
-            rlTranslatef(-0.13f, alturaQuadril, 0.0f);
-            rlRotatef(balancoPerna - (agachado ? 35.0f : 0.0f), 1.0f, 0.0f, 0.0f);
-            DrawCube({ 0.0f, -0.34f, 0.0f }, 0.19f, 0.66f, 0.21f, corJeans);
-            DrawCubeWires({ 0.0f, -0.34f, 0.0f }, 0.19f, 0.66f, 0.21f, corContorno);
-            DrawCube({ 0.0f, -0.70f, 0.04f }, 0.20f, 0.14f, 0.29f, corSapato);
-            DrawCubeWires({ 0.0f, -0.70f, 0.04f }, 0.20f, 0.14f, 0.29f, corContorno);
-        rlPopMatrix();
-
-        // Perna Direita
-        rlPushMatrix();
-            rlTranslatef(0.13f, alturaQuadril, 0.0f);
-            rlRotatef(-balancoPerna - (agachado ? 35.0f : 0.0f), 1.0f, 0.0f, 0.0f);
-            DrawCube({ 0.0f, -0.34f, 0.0f }, 0.19f, 0.66f, 0.21f, corJeans);
-            DrawCubeWires({ 0.0f, -0.34f, 0.0f }, 0.19f, 0.66f, 0.21f, corContorno);
-            DrawCube({ 0.0f, -0.70f, 0.04f }, 0.20f, 0.14f, 0.29f, corSapato);
-            DrawCubeWires({ 0.0f, -0.70f, 0.04f }, 0.20f, 0.14f, 0.29f, corContorno);
-        rlPopMatrix();
-
-        // Hierarquia do Tronco
-        rlPushMatrix();
-            rlTranslatef(0.0f, alturaQuadril + respiracao, 0.0f);
-            rlRotatef(inclinacaoTronco, 1.0f, 0.0f, 0.0f);
-            rlRotatef(gingadoTronco, 0.0f, 0.0f, 1.0f);
-
-            float centroTorsoY = 0.34f;
-            DrawCube({ 0.0f, centroTorsoY, 0.0f }, 0.48f, 0.66f, 0.26f, corJaqueta);
-            DrawCubeWires({ 0.0f, centroTorsoY, 0.0f }, 0.48f, 0.66f, 0.26f, corContorno);
-            DrawCube({ 0.0f, centroTorsoY + 0.02f, 0.135f }, 0.16f, 0.60f, 0.02f, corCamiseta);
-            DrawCube({ -0.14f, centroTorsoY + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
-            DrawCube({  0.14f, centroTorsoY + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
-
-            // Lanterna 3D real (lanterna.glb) no bolso/peito esquerdo
-            if (!modelosExtrasProntos) {
-                modPoste = LoadModel("poste.glb");
-                BoundingBox bbP = GetModelBoundingBox(modPoste);
-                float altP = bbP.max.y - bbP.min.y;
-                if (altP > 0.01f) escalaPoste = 5.5f / altP;
-
-                modLanterna = LoadModel("lanterna.glb");
-                BoundingBox bbL = GetModelBoundingBox(modLanterna);
-                float tamL = std::max({bbL.max.x - bbL.min.x, bbL.max.y - bbL.min.y, bbL.max.z - bbL.min.z});
-                if (tamL > 0.001f) escalaLanterna = 0.24f / tamL;
-
-                modelosExtrasProntos = true;
-            }
-            // Lanterna movida para a mao direita
-
-            // Cabeca
-            rlPushMatrix();
-                rlTranslatef(0.0f, 0.84f, 0.0f);
-                rlRotatef(-inclinacaoTronco * 0.6f, 1.0f, 0.0f, 0.0f);
-                DrawCube({ 0.0f, 0.0f, 0.0f }, 0.28f, 0.31f, 0.28f, corPele);
-                DrawCubeWires({ 0.0f, 0.0f, 0.0f }, 0.28f, 0.31f, 0.28f, corContorno);
-                DrawCube({ -0.07f, 0.02f, 0.142f }, 0.04f, 0.03f, 0.01f, Color{ 25, 20, 20, 255 });
-                DrawCube({  0.07f, 0.02f, 0.142f }, 0.04f, 0.03f, 0.01f, Color{ 25, 20, 20, 255 });
-                DrawCube({ 0.0f, 0.13f, -0.01f }, 0.30f, 0.11f, 0.31f, corCabelo);
-                DrawCube({ 0.0f, 0.02f, -0.14f }, 0.30f, 0.26f, 0.06f, corCabelo);
-                DrawCube({ -0.14f, 0.04f, -0.02f }, 0.04f, 0.18f, 0.24f, corCabelo);
-                DrawCube({  0.14f, 0.04f, -0.02f }, 0.04f, 0.18f, 0.24f, corCabelo);
-            rlPopMatrix();
-
-            // Braco Esquerdo
-            rlPushMatrix();
-                rlTranslatef(-0.31f, 0.58f, 0.0f);
-                rlRotatef(-balancoBraco, 1.0f, 0.0f, 0.0f);
-                rlRotatef(4.0f, 0.0f, 0.0f, 1.0f);
-                DrawCube({ 0.0f, -0.25f, 0.0f }, 0.15f, 0.50f, 0.16f, corJaqueta);
-                DrawCubeWires({ 0.0f, -0.25f, 0.0f }, 0.15f, 0.50f, 0.16f, corContorno);
-                DrawCube({ 0.0f, -0.54f, 0.01f }, 0.11f, 0.12f, 0.13f, corPele);
-            rlPopMatrix();
-
-            // Braco Direito
-            rlPushMatrix();
-                rlTranslatef(0.31f, 0.58f, 0.0f);
-                rlRotatef(balancoBraco, 1.0f, 0.0f, 0.0f);
-                rlRotatef(-4.0f, 0.0f, 0.0f, 1.0f);
-                DrawCube({ 0.0f, -0.25f, 0.0f }, 0.15f, 0.50f, 0.16f, corJaqueta);
-                DrawCubeWires({ 0.0f, -0.25f, 0.0f }, 0.15f, 0.50f, 0.16f, corContorno);
-                DrawCube({ 0.0f, -0.54f, 0.01f }, 0.11f, 0.12f, 0.13f, corPele);
-            rlPopMatrix();
-        rlPopMatrix();
+        // Desenha a Lanterna PSX amarela na mao/lateral direita apontando para frente
+        float altMao = agachado ? 0.68f : 0.92f;
+        DrawModelEx(
+            modLanternaPSX,
+            { 0.28f, altMao, 0.16f },
+            { 1.0f, 0.0f, 0.0f },
+            90.0f,
+            { escalaLanternaPSX, escalaLanternaPSX, escalaLanternaPSX },
+            WHITE
+        );
     rlPopMatrix();
 }
-
-const char* vsCode =
-    "#version 100\n"
-    "attribute vec3 vertexPosition;\n"
-    "attribute vec2 vertexTexCoord;\n"
-    "attribute vec4 vertexColor;\n"
-    "uniform mat4 mvp;\n"
-    "uniform mat4 matModel;\n"
-    "varying vec3 fragPos;\n"
-    "varying vec2 fragTexCoord;\n"
-    "varying vec4 fragColor;\n"
-    "void main() {\n"
-    "    fragPos = vec3(matModel * vec4(vertexPosition, 1.0));\n"
-    "    fragTexCoord = vertexTexCoord;\n"
-    "    fragColor = vertexColor;\n"
-    "    gl_Position = mvp * vec4(vertexPosition, 1.0);\n"
-    "}\n";
-
-const char* fsCode =
-    "#version 100\n"
-    "precision mediump float;\n"
-    "varying vec2 fragTexCoord;\n"
-    "varying vec4 fragColor;\n"
-    "varying vec3 fragPos;\n"
-    "uniform sampler2D texture0;\n"
-    "uniform vec3 lightPos;\n"
-    "uniform vec3 lightDir;\n"
-    "uniform int lanternaOn;\n"
-    "void main() {\n"
-    "    vec4 texel = texture2D(texture0, fragTexCoord) * fragColor;\n"
-    "    // Noite bem escura para destacar a lanterna\n"
-    "    vec3 luzTotal = vec3(0.04, 0.05, 0.08);\n"
-    "    if (lanternaOn == 1) {\n"
-    "        vec3 toFrag = fragPos - lightPos;\n"
-    "        float distLuz = length(toFrag);\n"
-    "        float spot = dot(normalize(toFrag), normalize(lightDir));\n"
-    "        float cone = smoothstep(0.65, 0.90, spot);\n"
-    "        float nucleo = smoothstep(0.86, 0.98, spot);\n"
-    "        float atten = clamp(1.0 - distLuz / 28.0, 0.0, 1.0);\n"
-    "        atten = atten * atten;\n"
-    "        float feixe = (cone * 2.8 + nucleo * 3.2) * atten;\n"
-    "        luzTotal += vec3(1.0, 0.95, 0.80) * feixe;\n"
-    "    }\n"
-    "    gl_FragColor = vec4(texel.rgb * luzTotal, texel.a);\n"
-    "}\n";
-
-Model modCarroBase, modCarroTeto;
-bool modCarroPronto = false;
-
-Model modAsfalto, modCalcada, modPredio;
-bool modelosRuaProntos = false;
-
 
 void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
     rlPushMatrix();
