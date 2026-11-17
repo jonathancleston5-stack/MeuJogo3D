@@ -190,15 +190,15 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
         SetTextureFilter(texCarTaxi, TEXTURE_FILTER_POINT);
         SetTextureFilter(texCarWheel, TEXTURE_FILTER_POINT);
 
-        modCarSedan.materials.maps[MATERIAL_MAP_DIFFUSE].texture  = texCarGrey;
-        modCarPolice.materials.maps[MATERIAL_MAP_DIFFUSE].texture = texCarPolice;
-        modCarTaxi.materials.maps[MATERIAL_MAP_DIFFUSE].texture   = texCarTaxi;
-        modCarWheel.materials.maps[MATERIAL_MAP_DIFFUSE].texture  = texCarWheel;
+        modCarSedan.materials->maps[MATERIAL_MAP_DIFFUSE].texture  = texCarGrey;
+        modCarPolice.materials->maps[MATERIAL_MAP_DIFFUSE].texture = texCarPolice;
+        modCarTaxi.materials->maps[MATERIAL_MAP_DIFFUSE].texture   = texCarTaxi;
+        modCarWheel.materials->maps[MATERIAL_MAP_DIFFUSE].texture  = texCarWheel;
 
-        modCarSedan.materials.shader  = shaderConsole;
-        modCarPolice.materials.shader = shaderConsole;
-        modCarTaxi.materials.shader   = shaderConsole;
-        modCarWheel.materials.shader  = shaderConsole;
+        modCarSedan.materials->shader  = shaderConsole;
+        modCarPolice.materials->shader = shaderConsole;
+        modCarTaxi.materials->shader   = shaderConsole;
+        modCarWheel.materials->shader  = shaderConsole;
 
         BoundingBox bb = GetModelBoundingBox(modCarPolice);
         float comp = std::max(bb.max.x - bb.min.x, bb.max.z - bb.min.z);
@@ -229,7 +229,7 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
         } else if (tipo == 1) {
             DrawModelEx(modCarTaxi, { 0.0f, offsetCarroY, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { escalaCarroPS1, escalaCarroPS1, escalaCarroPS1 }, WHITE);
         } else {
-            modCarSedan.materials.maps[MATERIAL_MAP_DIFFUSE].texture = (corLataria.r > corLataria.g) ? texCarGrey : texCarGreen;
+            modCarSedan.materials->maps[MATERIAL_MAP_DIFFUSE].texture = (corLataria.r > corLataria.g) ? texCarGrey : texCarGreen;
             DrawModelEx(modCarSedan, { 0.0f, offsetCarroY, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { escalaCarroPS1, escalaCarroPS1, escalaCarroPS1 }, WHITE);
         }
 
