@@ -1,6 +1,7 @@
 #include <cstring>
 #include <algorithm>
 #include "raylib.h"
+#include "raymath.h"
 #include "rlgl.h"
 #include <cmath>
 #include <cstdio>
