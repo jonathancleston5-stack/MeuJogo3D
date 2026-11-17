@@ -204,12 +204,12 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
         float comp = std::max(bb.max.x - bb.min.x, bb.max.z - bb.min.z);
         if (comp > 0.01f) {
             escalaCarroPS1 = 4.35f / comp;
-            offsetCarroY   = -bb.min.y * escalaCarroPS1 + 0.18f;
+            offsetCarroY   = -bb.min.y * escalaCarroPS1 + 0.11f;
         }
         BoundingBox bbW = GetModelBoundingBox(modCarWheel);
         float diamW = bbW.max.y - bbW.min.y;
         if (diamW > 0.01f) {
-            escalaRodaPS1 = 0.64f / diamW;
+            escalaRodaPS1 = 0.55f / diamW;
         }
         carrosPS1Prontos = true;
     }
@@ -233,13 +233,15 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
             DrawModelEx(modCarSedan, { 0.0f, offsetCarroY, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { escalaCarroPS1, escalaCarroPS1, escalaCarroPS1 }, WHITE);
         }
 
-        // 4 Rodas 3D PS1
-        float rx = 0.86f;
-        float rz = 1.32f;
-        DrawModelEx(modCarWheel, { -rx, 0.32f,  rz }, { 0.0f, 1.0f, 0.0f }, 180.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
-        DrawModelEx(modCarWheel, {  rx, 0.32f,  rz }, { 0.0f, 1.0f, 0.0f },   0.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
-        DrawModelEx(modCarWheel, { -rx, 0.32f, -rz }, { 0.0f, 1.0f, 0.0f }, 180.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
-        DrawModelEx(modCarWheel, {  rx, 0.32f, -rz }, { 0.0f, 1.0f, 0.0f },   0.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
+        // 4 Rodas 3D PS1 alinhadas nos para-lamas
+        float rx = 0.71f;
+        float rzF = 1.28f;
+        float rzT = -1.26f;
+        float ry = 0.275f;
+        DrawModelEx(modCarWheel, { -rx, ry, rzF }, { 0.0f, 1.0f, 0.0f }, 180.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
+        DrawModelEx(modCarWheel, {  rx, ry, rzF }, { 0.0f, 1.0f, 0.0f },   0.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
+        DrawModelEx(modCarWheel, { -rx, ry, rzT }, { 0.0f, 1.0f, 0.0f }, 180.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
+        DrawModelEx(modCarWheel, {  rx, ry, rzT }, { 0.0f, 1.0f, 0.0f },   0.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
     rlPopMatrix();
 }
 
