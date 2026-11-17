@@ -33,6 +33,7 @@ void carregarConfig(bool &lanterna, int &fps, bool &som, bool &showFps, int &niv
     }
 }
 
+Shader shaderConsole;
 Model modPoste, modLanterna;
 float escalaPoste = 1.0f, escalaLanterna = 1.0f;
 bool modelosExtrasProntos = false;
@@ -369,7 +370,7 @@ void desenharRuaSilentHill() {
 int main() {
     InitWindow(0, 0, "Shadow Protocol 3D");
     SetTargetFPS(30);
-    Shader shaderConsole = LoadShaderFromMemory(vsCode, fsCode);
+    shaderConsole = LoadShaderFromMemory(vsCode, fsCode);
     int locLightPos = GetShaderLocation(shaderConsole, "lightPos");
     int locLightDir = GetShaderLocation(shaderConsole, "lightDir");
 
