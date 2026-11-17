@@ -35,6 +35,10 @@ void carregarConfig(bool &lanterna, int &fps, bool &som, bool &showFps, int &niv
 }
 
 Shader shaderConsole;
+Model modLuaOlho;
+Texture2D texLuaOlho;
+float escalaLuaOlho = 1.0f;
+bool luaOlhoPronta = false;
 Model modHarry, modLanternaPSX;
 float escalaHarry = 1.0f, offsetHarryY = 0.0f, offsetHarryX = 0.0f, offsetHarryZ = 0.0f;
 float escalaLanternaPSX = 1.0f;
@@ -242,6 +246,38 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
         DrawModelEx(modCarWheel, {  rx, ry, rzF }, { 0.0f, 1.0f, 0.0f },   0.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
         DrawModelEx(modCarWheel, { -rx, ry, rzT }, { 0.0f, 1.0f, 0.0f }, 180.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
         DrawModelEx(modCarWheel, {  rx, ry, rzT }, { 0.0f, 1.0f, 0.0f },   0.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
+    rlPopMatrix();
+}
+
+void desenharLuaOlho(Vector3 posJogador) {
+    if (!luaOlhoPronta) {
+        modLuaOlho = LoadModel("eye.obj");
+        texLuaOlho = LoadTexture("eyeball_texture.png");
+        SetTextureFilter(texLuaOlho, TEXTURE_FILTER_POINT);
+        modLuaOlho.materials->maps[MATERIAL_MAP_DIFFUSE].texture = texLuaOlho;
+
+        BoundingBox bb = GetModelBoundingBox(modLuaOlho);
+        float diam = std::max({bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z});
+        if (diam > 0.001f) escalaLuaOlho = 14.0f / diam;
+        luaOlhoPronta = true;
+    }
+
+    // Posicao relativa ao jogador para parecer distante no horizonte como uma lua real
+    Vector3 posLua = { posJogador.x + 7.5f, 24.0f, posJogador.z - 55.0f };
+    float olharX = (posJogador.x - posLua.x) * 0.45f;
+
+    rlPushMatrix();
+        rlTranslatef(posLua.x, posLua.y, posLua.z);
+        rlRotatef(22.0f, 1.0f, 0.0f, 0.0f);
+        rlRotatef(olharX, 0.0f, 1.0f, 0.0f);
+        DrawModelEx(
+            modLuaOlho,
+            { 0.0f, 0.0f, 0.0f },
+            { 0.0f, 1.0f, 0.0f },
+            0.0f,
+            { escalaLuaOlho, escalaLuaOlho, escalaLuaOlho },
+            Color{ 225, 215, 220, 255 }
+        );
     rlPopMatrix();
 }
 
@@ -532,6 +568,7 @@ int main() {
         BeginMode3D(camera);
             if (optLanterna) BeginShaderMode(shaderConsole);
             contadorCarroChamada = 0;
+                desenharLuaOlho(posHeroi);
                 desenharRuaSilentHill();
             if (optLanterna) EndShaderMode();
             desenharBonecoPS1(posHeroi, anguloHeroi, passoAnim, agachado);
