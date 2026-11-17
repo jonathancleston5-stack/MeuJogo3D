@@ -263,7 +263,8 @@ void desenharLuaOlho(Vector3 posJogador) {
 
     rlPushMatrix();
         rlTranslatef(posLua.x, posLua.y, posLua.z);
-        rlRotatef(12.0f, 1.0f, 0.0f, 0.0f);
+        rlRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+        rlRotatef(18.0f, 0.0f, 0.0f, 1.0f);
         rlRotatef(olharX, 0.0f, 1.0f, 0.0f);
         DrawModelEx(
             modLuaOlho,
@@ -277,11 +278,7 @@ void desenharLuaOlho(Vector3 posJogador) {
 }
 
 void desenharRuaSilentHill() {
-    // Muros fechando os becos laterais
-    for (float bz = -40.0f; bz <= 40.0f; bz += 20.0f) {
-        DrawCube(Vector3{ -14.5f, 2.5f, bz }, 1.0f, 5.0f, 12.0f, Color{ 18, 20, 25, 255 });
-        DrawCube(Vector3{  14.5f, 2.5f, bz }, 1.0f, 5.0f, 12.0f, Color{ 18, 20, 25, 255 });
-    }
+    // Muros pretos removidos
 
     if (!modelosRuaProntos) {
         // Textura procedural de asfalto rugoso e manchado (sem xadrez)
@@ -354,7 +351,7 @@ void desenharRuaSilentHill() {
 
     if (modQuarteirao.meshCount > 0) {
         float posZPredios[8] = { -30.0f, -12.0f, 6.0f, 24.0f, -28.0f, -10.0f, 8.0f, 26.0f };
-        float posXPredios[8] = { -14.8f, -14.8f, -14.8f, -14.8f, 14.8f, 14.8f, 14.8f, 14.8f };
+        float posXPredios[8] = { -13.6f, -13.6f, -13.6f, -13.6f, 13.6f, 13.6f, 13.6f, 13.6f };
         float rotYPredios[8] = { 90.0f, 90.0f, 90.0f, 90.0f, -90.0f, -90.0f, -90.0f, -90.0f };
 
         for (int i = 0; i < 8; i++) {
@@ -574,9 +571,9 @@ int main() {
         BeginTextureMode(targetRes);
         ClearBackground(Color{ 8, 10, 16, 255 });
         BeginMode3D(camera);
+            desenharLuaOlho(posHeroi);
             if (optLanterna) BeginShaderMode(shaderConsole);
             contadorCarroChamada = 0;
-                desenharLuaOlho(posHeroi);
                 desenharRuaSilentHill();
             if (optLanterna) EndShaderMode();
             desenharBonecoPS1(posHeroi, anguloHeroi, passoAnim, agachado);
