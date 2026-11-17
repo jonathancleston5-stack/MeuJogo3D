@@ -163,14 +163,14 @@ const char* fsCode =
     "    vec3 toFrag = fragPos - lightPos;\n"
     "    float dist = length(toFrag);\n"
     "    float spot = dot(normalize(toFrag), normalize(lightDir));\n"
-    "    float cone = smoothstep(0.65, 0.93, spot);\n"
+    "    float cone = smoothstep(0.68, 0.96, spot); float nucleo = smoothstep(0.88, 0.99, spot);\n"
     "    float atten = clamp(1.0 - dist / 22.0, 0.0, 1.0);\n"
-    "    float luz = 0.20 + (cone * atten * 1.05);\n"
+    "    float luz = 0.14 + (cone * atten * 0.85) + (nucleo * atten * 0.55);\n"
     "    // Becos laterais bem escuros quando longe da avenida central\n"
     "    if (abs(fragPos.x) > 10.6) luz *= 0.35;\n"
     "    // Neblina estilo Silent Hill (densa e cinza-azulada)\n"
-    "    float neblina = clamp((dist - 3.5) / 18.5, 0.0, 0.96);\n"
-    "    vec3 finalRgb = mix(texel.rgb * luz, vec3(0.58, 0.62, 0.66), neblina);\n"
+    "    float neblina = clamp((dist - 5.5) / 16.5, 0.0, 0.98);\n"
+    "    vec3 finalRgb = mix(texel.rgb * luz, vec3(0.42, 0.46, 0.50), neblina);\n"
     "    gl_FragColor = vec4(finalRgb, texel.a);\n"
     "}\n";
 
@@ -182,20 +182,48 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
     rlPushMatrix();
         rlTranslatef(x, 0.0f, z);
         rlRotatef(rotY, 0.0f, 1.0f, 0.0f);
-        // Chassi e capo enferrujados
-        DrawCube({ 0.0f, 0.55f, 0.0f }, 1.85f, 0.65f, 4.10f, corLataria);
-        DrawCubeWires({ 0.0f, 0.55f, 0.0f }, 1.85f, 0.65f, 4.10f, Color{ 20, 22, 24, 255 });
-        // Cabine e vidros escuros
-        DrawCube({ 0.0f, 1.12f, -0.25f }, 1.62f, 0.55f, 2.05f, corLataria);
-        DrawCube({ 0.0f, 1.12f, -0.25f }, 1.66f, 0.42f, 1.85f, Color{ 18, 22, 26, 255 });
-        // Rodas e para-choques
-        for (int lx = -1; lx <= 1; lx += 2) {
-            for (int lz = -1; lz <= 1; lz += 2) {
-                DrawCylinderEx({ 0.92f * lx, 0.34f, 1.25f * lz }, { 0.78f * lx, 0.34f, 1.25f * lz }, 0.34f, 0.34f, 10, Color{ 18, 18, 20, 255 });
+
+        Color corVidro     = { 18, 22, 28, 255 };
+        Color corPneu      = { 16, 16, 18, 255 };
+        Color corRoda      = { 95, 100, 108, 255 };
+        Color corParachoque= { 35, 38, 42, 255 };
+        Color corFarol     = { 185, 180, 155, 255 };
+        Color corLanternaT = { 120, 22, 22, 255 };
+        Color corContorno  = { 10, 12, 15, 255 };
+
+        // Base / Chassi inferior
+        DrawCube({ 0.0f, 0.52f, 0.0f }, 1.92f, 0.56f, 4.20f, corLataria);
+        DrawCubeWires({ 0.0f, 0.52f, 0.0f }, 1.92f, 0.56f, 4.20f, corContorno);
+
+        // Cabine / Teto
+        DrawCube({ 0.0f, 1.05f, -0.15f }, 1.66f, 0.52f, 2.25f, corLataria);
+        DrawCubeWires({ 0.0f, 1.05f, -0.15f }, 1.66f, 0.52f, 2.25f, corContorno);
+
+        // Vidros (Para-brisa, traseiro e laterais)
+        DrawCube({ 0.0f, 1.04f,  0.98f }, 1.50f, 0.40f, 0.04f, corVidro);
+        DrawCube({ 0.0f, 1.04f, -1.28f }, 1.50f, 0.40f, 0.04f, corVidro);
+        DrawCube({ -0.84f, 1.04f, -0.15f }, 0.04f, 0.38f, 1.95f, corVidro);
+        DrawCube({  0.84f, 1.04f, -0.15f }, 0.04f, 0.38f, 1.95f, corVidro);
+
+        // Para-choques dianteiro e traseiro
+        DrawCube({ 0.0f, 0.36f,  2.14f }, 1.98f, 0.22f, 0.16f, corParachoque);
+        DrawCube({ 0.0f, 0.36f, -2.14f }, 1.98f, 0.22f, 0.16f, corParachoque);
+
+        // Farois e Lanternas traseiras
+        DrawCube({ -0.66f, 0.58f,  2.11f }, 0.36f, 0.16f, 0.04f, corFarol);
+        DrawCube({  0.66f, 0.58f,  2.11f }, 0.36f, 0.16f, 0.04f, corFarol);
+        DrawCube({ -0.66f, 0.58f, -2.11f }, 0.36f, 0.16f, 0.04f, corLanternaT);
+        DrawCube({  0.66f, 0.58f, -2.11f }, 0.36f, 0.16f, 0.04f, corLanternaT);
+
+        // 4 Rodas
+        float posRodasX[2] = { -0.94f, 0.94f };
+        float posRodasZ[2] = {  1.30f, -1.30f };
+        for (int ix = 0; ix < 2; ix++) {
+            for (int iz = 0; iz < 2; iz++) {
+                DrawCube({ posRodasX[ix], 0.32f, posRodasZ[iz] }, 0.22f, 0.62f, 0.62f, corPneu);
+                DrawCube({ posRodasX[ix] * 1.02f, 0.32f, posRodasZ[iz] }, 0.23f, 0.32f, 0.32f, corRoda);
             }
         }
-        DrawCube({ 0.0f, 0.36f,  2.08f }, 1.90f, 0.16f, 0.14f, Color{ 55, 58, 62, 255 });
-        DrawCube({ 0.0f, 0.36f, -2.08f }, 1.90f, 0.16f, 0.14f, Color{ 55, 58, 62, 255 });
     rlPopMatrix();
 }
 
@@ -262,7 +290,7 @@ void desenharRuaSilentHill() {
             DrawCube(Vector3{ px - l*0.7f, 5.65f, pz }, 1.5f, 0.10f, 0.12f, Color{ 44, 48, 52, 255 });
             // Lampada amarela fraca + cone de luz suave no chao
             DrawCube(Vector3{ px - l*1.3f, 5.55f, pz }, 0.38f, 0.14f, 0.24f, Color{ 255, 225, 140, 255 });
-            DrawCylinder(Vector3{ px - l*1.3f, 0.02f, pz }, 2.4f, 0.15f, 5.5f, 12, Color{ 255, 220, 130, 22 });
+            DrawSphere(Vector3{ px - l*1.3f, 5.48f, pz }, 0.26f, Color{ 255, 225, 145, 55 });
         }
     }
 
@@ -462,7 +490,7 @@ int main() {
         SetShaderValue(shaderConsole, locLightDir, dirLuz, SHADER_UNIFORM_VEC3);
 
         BeginTextureMode(targetRes);
-        ClearBackground(Color{ 148, 158, 168, 255 });
+        ClearBackground(Color{ 107, 117, 128, 255 });
         BeginMode3D(camera);
             if (optLanterna) BeginShaderMode(shaderConsole);
             desenharRuaSilentHill();
