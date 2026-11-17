@@ -41,13 +41,15 @@ bool harryPronto = false;
 ModelAnimation *animsHarry = nullptr;
 int animCountHarry = 0;
 int animFrameHarry = 0;
+int idxWalk = 0, idxIdle = 0;
+float timerAnimHarry = 0.0f;
 Model modPoste, modLanterna;
 float escalaPoste = 1.0f, escalaLanterna = 1.0f;
 bool modelosExtrasProntos = false;
 
 void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachado) {
     if (!harryPronto) {
-        modHarry = LoadModel("harry.glb");
+        modHarry = LoadModel("personagem.gltf");
         BoundingBox bb = GetModelBoundingBox(modHarry);
         float alt = bb.max.y - bb.min.y;
         if (alt > 0.001f) {
@@ -56,8 +58,12 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             offsetHarryX = -((bb.min.x + bb.max.x) * 0.5f) * escalaHarry;
             offsetHarryZ = -((bb.min.z + bb.max.z) * 0.5f) * escalaHarry;
         }
-        // Mantem shader padrao no Harry com leve tonalidade noturna para ver a jaqueta
-        animsHarry = LoadModelAnimations("harry.glb", &animCountHarry);
+        animsHarry = LoadModelAnimations("personagem.gltf", &animCountHarry);
+        for (int i = 0; i < animCountHarry; i++) {
+            std::string nome(animsHarry[i].name);
+            if (nome.find("Walk") != std::string::npos || nome.find("walk") != std::string::npos) idxWalk = i;
+            if (nome.find("Idle") != std::string::npos || nome.find("idle") != std::string::npos) idxIdle = i;
+        }
 
         modLanternaPSX = LoadModel("lanterna_psx.glb");
         BoundingBox bbL = GetModelBoundingBox(modLanternaPSX);
@@ -69,22 +75,19 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
 
     bool andando = (cicloPasso > 0.01f);
     if (animCountHarry > 0 && animsHarry != nullptr) {
-        if (andando) {
-            animFrameHarry = (animFrameHarry + 1) % animsHarry[0].keyframeCount;
-        } else {
-            animFrameHarry = 0;
+        int animAtual = andando ? idxWalk : idxIdle;
+        timerAnimHarry += GetFrameTime() * (andando ? (agachado ? 22.0f : 32.0f) : 24.0f);
+        if (animsHarry[animAtual].keyframeCount > 0) {
+            animFrameHarry = ((int)timerAnimHarry) % animsHarry[animAtual].keyframeCount;
+            UpdateModelAnimation(modHarry, animsHarry[animAtual], animFrameHarry);
         }
-        UpdateModelAnimation(modHarry, animsHarry[0], animFrameHarry);
     }
 
-    float puloPasso = andando ? std::abs(std::cos(cicloPasso)) * 0.04f : 0.0f;
-    float gingado   = andando ? std::sin(cicloPasso) * 3.5f : 0.0f;
-    float escalaY   = agachado ? (escalaHarry * 0.72f) : escalaHarry;
+    float escalaY = agachado ? (escalaHarry * 0.72f) : escalaHarry;
 
     rlPushMatrix();
-        rlTranslatef(pos.x, pos.y + puloPasso, pos.z);
+        rlTranslatef(pos.x, pos.y, pos.z);
         rlRotatef(angulo, 0.0f, 1.0f, 0.0f);
-        rlRotatef(gingado, 0.0f, 0.0f, 1.0f);
         if (agachado) rlRotatef(18.0f, 1.0f, 0.0f, 0.0f);
 
         DrawModelEx(
@@ -93,13 +96,13 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             { 0.0f, 1.0f, 0.0f },
             0.0f,
             { escalaHarry, escalaY, escalaHarry },
-            Color{ 145, 150, 165, 255 }
+            Color{ 165, 170, 185, 255 }
         );
 
         float altMao = agachado ? 0.64f : 0.88f;
         DrawModelEx(
             modLanternaPSX,
-            { 0.21f, altMao, 0.12f },
+            { 0.24f, altMao, 0.14f },
             { 0.0f, 1.0f, 0.0f },
             0.0f,
             { escalaLanternaPSX, escalaLanternaPSX, escalaLanternaPSX },
