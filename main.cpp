@@ -94,9 +94,21 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             DrawCube({ -0.14f, centroTorsoY + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
             DrawCube({  0.14f, centroTorsoY + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
 
-            // Lanterna no bolso
-            DrawCube({ -0.15f, centroTorsoY + 0.12f, 0.15f }, 0.07f, 0.16f, 0.07f, Color{ 30, 32, 35, 255 });
-            DrawCube({ -0.15f, centroTorsoY + 0.15f, 0.19f }, 0.06f, 0.06f, 0.02f, Color{ 255, 245, 200, 255 });
+            // Lanterna 3D real (lanterna.glb) no bolso/peito esquerdo
+            if (!modelosExtrasProntos) {
+                modPoste = LoadModel("poste.glb");
+                BoundingBox bbP = GetModelBoundingBox(modPoste);
+                float altP = bbP.max.y - bbP.min.y;
+                if (altP > 0.01f) escalaPoste = 5.5f / altP;
+
+                modLanterna = LoadModel("lanterna.glb");
+                BoundingBox bbL = GetModelBoundingBox(modLanterna);
+                float tamL = std::max({bbL.max.x - bbL.min.x, bbL.max.y - bbL.min.y, bbL.max.z - bbL.min.z});
+                if (tamL > 0.001f) escalaLanterna = 0.24f / tamL;
+
+                modelosExtrasProntos = true;
+            }
+            DrawModelEx(modLanterna, { -0.16f, centroTorsoY + 0.14f, 0.17f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { escalaLanterna, escalaLanterna, escalaLanterna }, WHITE);
 
             // Cabeca
             rlPushMatrix();
@@ -190,10 +202,174 @@ const char* fsCode =
 
 Model modCarroBase, modCarroTeto;
 bool modCarroPronto = false;
+Model modPoste, modLanterna;
+float escalaPoste = 1.0f, escalaLanterna = 1.0f;
+bool modelosExtrasProntos = false;
 Model modAsfalto, modCalcada, modPredio;
 bool modelosRuaProntos = false;
 
 
+void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
+    rlPushMatrix();
+        rlTranslatef(x, 0.0f, z);
+        rlRotatef(rotY, 0.0f, 1.0f, 0.0f);
+
+        Color corVidro     = { 18, 22, 28, 255 };
+        Color corPneu      = { 16, 16, 18, 255 };
+        Color corRoda      = { 95, 100, 108, 255 };
+        Color corParachoque= { 35, 38, 42, 255 };
+        Color corFarol     = { 185, 180, 155, 255 };
+        Color corLanternaT = { 120, 22, 22, 255 };
+        Color corContorno  = { 10, 12, 15, 255 };
+
+        if (!modCarroPronto) {
+            Texture2D texFerr = LoadTexture("ferrugem.png");
+            SetTextureWrap(texFerr, TEXTURE_WRAP_REPEAT);
+            SetTextureFilter(texFerr, TEXTURE_FILTER_POINT);
+            modCarroBase = LoadModelFromMesh(GenMeshCube(1.92f, 0.56f, 4.20f));
+            modCarroBase.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texFerr;
+            modCarroTeto = LoadModelFromMesh(GenMeshCube(1.66f, 0.52f, 2.25f));
+            modCarroTeto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texFerr;
+            modCarroPronto = true;
+        }
+        // Base / Chassi inferior texturizado
+        DrawModel(modCarroBase, { 0.0f, 0.52f, 0.0f }, 1.0f, corLataria);
+        DrawCubeWires({ 0.0f, 0.52f, 0.0f }, 1.92f, 0.56f, 4.20f, corContorno);
+
+        // Cabine / Teto texturizado
+        DrawModel(modCarroTeto, { 0.0f, 1.05f, -0.15f }, 1.0f, corLataria);
+        DrawCubeWires({ 0.0f, 1.05f, -0.15f }, 1.66f, 0.52f, 2.25f, corContorno);
+
+        // Vidros (Para-brisa, traseiro e laterais)
+        DrawCube({ 0.0f, 1.04f,  0.98f }, 1.50f, 0.40f, 0.04f, corVidro);
+        DrawCube({ 0.0f, 1.04f, -1.28f }, 1.50f, 0.40f, 0.04f, corVidro);
+        DrawCube({ -0.84f, 1.04f, -0.15f }, 0.04f, 0.38f, 1.95f, corVidro);
+        DrawCube({  0.84f, 1.04f, -0.15f }, 0.04f, 0.38f, 1.95f, corVidro);
+
+        // Para-choques dianteiro e traseiro
+        DrawCube({ 0.0f, 0.36f,  2.14f }, 1.98f, 0.22f, 0.16f, corParachoque);
+        DrawCube({ 0.0f, 0.36f, -2.14f }, 1.98f, 0.22f, 0.16f, corParachoque);
+
+        // Farois e Lanternas traseiras
+        DrawCube({ -0.66f, 0.58f,  2.11f }, 0.36f, 0.16f, 0.04f, corFarol);
+        DrawCube({  0.66f, 0.58f,  2.11f }, 0.36f, 0.16f, 0.04f, corFarol);
+        DrawCube({ -0.66f, 0.58f, -2.11f }, 0.36f, 0.16f, 0.04f, corLanternaT);
+        DrawCube({  0.66f, 0.58f, -2.11f }, 0.36f, 0.16f, 0.04f, corLanternaT);
+
+        // Sombra de contato no chao embaixo do carro
+        DrawCylinder(Vector3{ 0.0f, 0.01f, 0.0f }, 1.25f, 1.25f, 0.01f, 12, Color{ 0, 0, 0, 145 });
+
+        // 4 Rodas
+        float posRodasX[2] = { -0.94f, 0.94f };
+        float posRodasZ[2] = {  1.30f, -1.30f };
+        for (int ix = 0; ix < 2; ix++) {
+            for (int iz = 0; iz < 2; iz++) {
+                DrawCube({ posRodasX[ix], 0.32f, posRodasZ[iz] }, 0.22f, 0.62f, 0.62f, corPneu);
+                DrawCube({ posRodasX[ix] * 1.02f, 0.32f, posRodasZ[iz] }, 0.23f, 0.32f, 0.32f, corRoda);
+            }
+        }
+    rlPopMatrix();
+}
+
+void desenharRuaSilentHill() {
+    // Muros fechando os becos laterais
+    for (float bz = -40.0f; bz <= 40.0f; bz += 20.0f) {
+        DrawCube(Vector3{ -14.5f, 2.5f, bz }, 1.0f, 5.0f, 12.0f, Color{ 18, 20, 25, 255 });
+        DrawCube(Vector3{  14.5f, 2.5f, bz }, 1.0f, 5.0f, 12.0f, Color{ 18, 20, 25, 255 });
+    }
+
+    if (!modelosRuaProntos) {
+        // Textura procedural de asfalto rugoso e manchado (sem xadrez)
+        Image i1 = GenImagePerlinNoise(128, 128, 12, 34, 6.5f);
+        ImageColorTint(&i1, Color{ 75, 80, 88, 255 });
+        for (int py = 0; py < 128; py++) {
+            for (int px = 0; px < 128; px++) {
+                int r = ((px * 73 + py * 137) % 19) - 9;
+                Color c = GetImageColor(i1, px, py);
+                c.r = (unsigned char)std::clamp(c.r + r, 15, 255);
+                c.g = (unsigned char)std::clamp(c.g + r, 15, 255);
+                c.b = (unsigned char)std::clamp(c.b + r + 2, 18, 255);
+                ImageDrawPixel(&i1, px, py, c);
+            }
+        }
+        modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 1, 1));
+        Texture2D texAsf = LoadTextureFromImage(i1);
+        SetTextureFilter(texAsf, TEXTURE_FILTER_POINT);
+        modAsfalto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texAsf;
+        UnloadImage(i1);
+
+        // Textura procedural de concreto gasto para calcadas e predios
+        Image i2 = GenImagePerlinNoise(128, 128, 55, 19, 4.5f);
+        ImageColorTint(&i2, Color{ 135, 138, 142, 255 });
+        for (int py = 0; py < 128; py++) {
+            for (int px = 0; px < 128; px++) {
+                int r = ((px * 31 + py * 97) % 15) - 7;
+                if (py % 32 == 0) r -= 18; // Juntas de dilatacao do concreto
+                Color c = GetImageColor(i2, px, py);
+                c.r = (unsigned char)std::clamp(c.r + r, 25, 255);
+                c.g = (unsigned char)std::clamp(c.g + r, 25, 255);
+                c.b = (unsigned char)std::clamp(c.b + r, 25, 255);
+                ImageDrawPixel(&i2, px, py, c);
+            }
+        }
+        modCalcada = LoadModelFromMesh(GenMeshCube(4.4f, 0.24f, 80.0f));
+        Texture2D texCalc = LoadTextureFromImage(i2);
+        SetTextureFilter(texCalc, TEXTURE_FILTER_POINT);
+        modCalcada.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texCalc;
+        UnloadImage(i2);
+        Image i3 = GenImageChecked(32, 32, 4, 8, Color{72,76,80,255}, Color{60,64,68,255});
+        modPredio = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
+        Texture2D texParede = LoadTexture("parede.png");
+        SetTextureWrap(texParede, TEXTURE_WRAP_REPEAT);
+        modPredio.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texParede;
+        modelosRuaProntos = true;
+    }
+
+    // Asfalto e faixas
+    DrawModel(modAsfalto, Vector3{ 0.0f, 0.0f, 0.0f }, 1.0f, Color{ 160, 165, 170, 255 });
+    for (float z = -36.0f; z <= 36.0f; z += 4.5f)
+        DrawCube(Vector3{ 0.0f, 0.015f, z }, 0.22f, 0.02f, 2.2f, Color{ 185, 155, 50, 255 });
+
+    // Calcadas e chao escuro dos becos laterais
+    DrawModel(modCalcada, Vector3{ -8.2f, 0.12f, 0.0f }, 1.0f, Color{ 185, 190, 195, 255 });
+    DrawModel(modCalcada, Vector3{  8.2f, 0.12f, 0.0f }, 1.0f, Color{ 185, 190, 195, 255 });
+    DrawCube(Vector3{ -18.0f, 0.05f, 0.0f }, 16.0f, 0.10f, 80.0f, Color{ 14, 16, 18, 255 });
+    DrawCube(Vector3{  18.0f, 0.05f, 0.0f }, 16.0f, 0.10f, 80.0f, Color{ 14, 16, 18, 255 });
+
+    // Predios separados por becos escuros (espacos de 4m a 5m entre eles)
+    struct Predio { float x, z, w, h, d; Color cor; };
+    Predio ps[] = {
+        {-15.2f,-28.0f,9.5f,16.0f,13.0f,{76,80,84,255}}, {-15.2f,-10.0f,9.5f,21.0f,13.5f,{88,82,78,255}},
+        {-15.2f,  9.0f,9.5f,14.0f,14.0f,{70,76,82,255}}, {-15.2f, 28.0f,9.5f,19.0f,13.0f,{82,80,76,255}},
+        { 15.2f,-27.0f,9.5f,18.0f,13.5f,{80,78,74,255}}, { 15.2f, -8.0f,9.5f,15.0f,13.0f,{68,74,80,255}},
+        { 15.2f, 10.0f,9.5f,22.0f,13.5f,{85,80,76,255}}, { 15.2f, 28.0f,9.5f,16.0f,13.0f,{74,78,84,255}}
+    };
+    for (int i = 0; i < 8; i++) {
+        DrawModelEx(modPredio, Vector3{ ps[i].x, ps[i].h/2.0f, ps[i].z }, Vector3{0,1,0}, 0.0f, Vector3{ ps[i].w, ps[i].h, ps[i].d }, ps[i].cor);
+        float fx = (ps[i].x < 0) ? (ps[i].x + ps[i].w/2.0f + 0.04f) : (ps[i].x - ps[i].w/2.0f - 0.04f);
+        int idxJ = 0;
+        for (float wy = 3.5f; wy < ps[i].h - 2.0f; wy += 3.2f) {
+            for (float wz = ps[i].z - ps[i].d/2.0f + 2.2f; wz <= ps[i].z + ps[i].d/2.0f - 2.2f; wz += 3.2f) {
+                idxJ++;
+                // Vidros quebrados: deixa estilhacos pontudos nas bordas em varias janelas
+                DrawCube(Vector3{ fx, wy, wz }, 0.08f, 1.5f, 1.1f, Color{ 14, 16, 20, 255 });
+                if ((idxJ + i) % 2 == 0) {
+                    DrawCube(Vector3{ fx + (ps[i].x < 0 ? 0.02f : -0.02f), wy + 0.52f, wz - 0.30f }, 0.05f, 0.42f, 0.45f, Color{ 115, 130, 140, 190 });
+                    DrawCube(Vector3{ fx + (ps[i].x < 0 ? 0.02f : -0.02f), wy - 0.48f, wz + 0.28f }, 0.05f, 0.48f, 0.42f, Color{ 115, 130, 140, 190 });
+                } else {
+                    DrawCube(Vector3{ fx + (ps[i].x < 0 ? 0.01f : -0.01f), wy, wz }, 0.04f, 1.42f, 1.02f, Color{ 68, 78, 86, 210 });
+                }
+            }
+        }
+    }
+
+        // Postes 3D estilo PSX (poste.glb) nos dois lados da calcada
+    if (modelosExtrasProntos) {
+        for (float pz = -30.0f; pz <= 30.0f; pz += 15.0f) {
+            DrawModelEx(modPoste, Vector3{ -6.8f, 0.12f, pz }, Vector3{ 0.0f, 1.0f, 0.0f }, 0.0f, Vector3{ escalaPoste, escalaPoste, escalaPoste }, WHITE);
+            DrawModelEx(modPoste, Vector3{  6.8f, 0.12f, pz }, Vector3{ 0.0f, 1.0f, 0.0f }, 180.0f, Vector3{ escalaPoste, escalaPoste, escalaPoste }, WHITE);
+        }
+    }
 void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
     rlPushMatrix();
         rlTranslatef(x, 0.0f, z);
