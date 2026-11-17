@@ -165,8 +165,8 @@ const char* fsCode =
     "    float spot = dot(normalize(toFrag), normalize(lightDir));\n"
     "    float cone = smoothstep(0.74, 0.96, spot); float nucleo = smoothstep(0.90, 0.995, spot);\n"
     "    float atten = clamp(1.0 - dist / 22.0, 0.0, 1.0);\n"
-    "    float feixe = (cone * 1.15 + nucleo * 0.95) * atten;
-        vec3 corLuz = vec3(0.10, 0.11, 0.13) + vec3(1.0, 0.93, 0.76) * feixe;\n"
+    "    float feixe = (cone * 1.15 + nucleo * 0.95) * atten;\n"
+        "        vec3 corLuz = vec3(0.10, 0.11, 0.13) + vec3(1.0, 0.93, 0.76) * feixe;\n"
     "    // Becos laterais bem escuros quando longe da avenida central\n"
     "    if (abs(fragPos.x) > 10.6) corLuz *= 0.45;\n"
     "    // Neblina estilo Silent Hill (densa e cinza-azulada)\n"
