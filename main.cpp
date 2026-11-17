@@ -384,6 +384,7 @@ void desenharRuaSilentHill() {
 }
 
 int main() {
+    InitAudioDevice();
     InitWindow(0, 0, "Shadow Protocol 3D");
     SetTargetFPS(30);
     shaderConsole = LoadShaderFromMemory(vsCode, fsCode);
@@ -415,7 +416,11 @@ int main() {
     float anguloHeroi = 180.0f;
     bool agachado = false;
 
+    Music ambiente = LoadMusicStream("ambiente.ogg");
+    PlayMusicStream(ambiente);
+
     while (!WindowShouldClose()) {
+        UpdateMusicStream(ambiente);
         float sw = (float)GetRenderWidth();
         float sh = (float)GetRenderHeight();
 
@@ -604,6 +609,8 @@ int main() {
         EndDrawing();
     }
     UnloadShader(shaderConsole);
+    UnloadMusicStream(ambiente);
+    CloseAudioDevice();
     CloseWindow();
     return 0;
 }
