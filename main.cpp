@@ -36,103 +36,100 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
     rlPushMatrix();
         rlTranslatef(pos.x, pos.y, pos.z);
         rlRotatef(angulo, 0.0f, 1.0f, 0.0f);
-        Color corJaqueta = { 48, 62, 74, 255 }, corCamiseta = { 210, 212, 208, 255 };
-        Color corJeans = { 32, 44, 68, 255 }, corPele = { 215, 178, 148, 255 };
-        Color corCabelo = { 58, 40, 28, 255 }, corSapato = { 38, 28, 22, 255 };
-        Color corContorno = { 12, 14, 18, 255 };
-        rlScalef(1.0f, agachado ? 0.72f : 1.0f, 1.0f);
-        float balanco = (cicloPasso > 0.0f) ? std::sin(cicloPasso) * 28.0f : 0.0f;
-        float resp = (cicloPasso == 0.0f) ? std::sin((float)GetTime() * 2.8f) * 0.015f : 0.0f;
 
-        for (int lado = -1; lado <= 1; lado += 2) {
-            rlPushMatrix();
-                rlTranslatef(0.13f * lado, 0.78f, 0.0f);
-                rlRotatef(balanco * (-lado), 1.0f, 0.0f, 0.0f);
-                DrawCube({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corJeans);
-                DrawCubeWires({ 0.0f, -0.35f, 0.0f }, 0.19f, 0.68f, 0.21f, corContorno);
-                DrawCube({ 0.0f, -0.72f, 0.04f }, 0.20f, 0.14f, 0.28f, corSapato);
-            rlPopMatrix();
-        }
+        Color corJaqueta   = { 48, 62, 74, 255 };
+        Color corCamiseta  = { 210, 212, 208, 255 };
+        Color corJeans     = { 32, 44, 68, 255 };
+        Color corPele      = { 215, 178, 148, 255 };
+        Color corCabelo    = { 58, 40, 28, 255 };
+        Color corSapato    = { 38, 28, 22, 255 };
+        Color corContorno  = { 12, 14, 18, 255 };
 
-        float yTorso = 1.12f + resp;
-        DrawCube({ 0.0f, yTorso, 0.0f }, 0.48f, 0.66f, 0.26f, corJaqueta);
-        DrawCubeWires({ 0.0f, yTorso, 0.0f }, 0.48f, 0.66f, 0.26f, corContorno);
-        DrawCube({ 0.0f, yTorso + 0.02f, 0.135f }, 0.16f, 0.60f, 0.02f, corCamiseta);
+        bool andando = (cicloPasso > 0.01f);
+        float tempo = (float)GetTime();
 
-        float yCabeca = 1.63f + resp;
-        DrawCube({ 0.0f, yCabeca, 0.0f }, 0.28f, 0.31f, 0.28f, corPele);
-        DrawCubeWires({ 0.0f, yCabeca, 0.0f }, 0.28f, 0.31f, 0.28f, corContorno);
-        DrawCube({ 0.0f, yCabeca + 0.13f, -0.01f }, 0.30f, 0.11f, 0.31f, corCabelo);
-        DrawCube({ 0.0f, yCabeca + 0.02f, -0.14f }, 0.30f, 0.26f, 0.06f, corCabelo);
+        float balancoPerna  = andando ? std::sin(cicloPasso) * (agachado ? 18.0f : 32.0f) : 0.0f;
+        float balancoBraco  = andando ? std::sin(cicloPasso) * 26.0f : std::sin(tempo * 2.0f) * 2.5f;
+        float puloPasso     = andando ? std::abs(std::cos(cicloPasso)) * 0.045f : 0.0f;
+        float respiracao    = !andando ? std::sin(tempo * 2.6f) * 0.015f : 0.0f;
+        float gingadoTronco = andando ? std::sin(cicloPasso) * 4.5f : 0.0f;
 
-        // Braco esquerdo balancando livre
+        float alturaQuadril    = agachado ? 0.52f : (0.78f + puloPasso);
+        float inclinacaoTronco = agachado ? 22.0f : (andando ? 6.0f : 0.0f);
+
+        // Perna Esquerda
         rlPushMatrix();
-            rlTranslatef(0.31f, yTorso + 0.24f, 0.0f);
-            rlRotatef(balanco * 0.85f, 1.0f, 0.0f, 0.0f);
-            DrawCube({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corJaqueta);
-            DrawCubeWires({ 0.0f, -0.26f, 0.0f }, 0.15f, 0.52f, 0.16f, corContorno);
-            DrawCube({ 0.0f, -0.55f, 0.0f }, 0.12f, 0.12f, 0.13f, corPele);
+            rlTranslatef(-0.13f, alturaQuadril, 0.0f);
+            rlRotatef(balancoPerna - (agachado ? 35.0f : 0.0f), 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.34f, 0.0f }, 0.19f, 0.66f, 0.21f, corJeans);
+            DrawCubeWires({ 0.0f, -0.34f, 0.0f }, 0.19f, 0.66f, 0.21f, corContorno);
+            DrawCube({ 0.0f, -0.70f, 0.04f }, 0.20f, 0.14f, 0.29f, corSapato);
+            DrawCubeWires({ 0.0f, -0.70f, 0.04f }, 0.20f, 0.14f, 0.29f, corContorno);
         rlPopMatrix();
 
-        // Braco direito levantado segurando a lanterna na mao
+        // Perna Direita
         rlPushMatrix();
-            rlTranslatef(-0.31f, yTorso + 0.24f, 0.0f);
-            rlRotatef(-48.0f + (balanco * 0.25f), 1.0f, 0.0f, 0.0f);
-            DrawCube({ 0.0f, -0.24f, 0.0f }, 0.15f, 0.48f, 0.16f, corJaqueta);
-            DrawCubeWires({ 0.0f, -0.24f, 0.0f }, 0.15f, 0.48f, 0.16f, corContorno);
-            DrawCube({ 0.0f, -0.50f, 0.02f }, 0.12f, 0.12f, 0.13f, corPele);
-            // Lanterna na mao
-            DrawCube({ 0.0f, -0.52f, 0.12f }, 0.07f, 0.07f, 0.24f, Color{ 28, 30, 34, 255 });
-            DrawCube({ 0.0f, -0.52f, 0.25f }, 0.09f, 0.09f, 0.04f, Color{ 255, 248, 210, 255 });
+            rlTranslatef(0.13f, alturaQuadril, 0.0f);
+            rlRotatef(-balancoPerna - (agachado ? 35.0f : 0.0f), 1.0f, 0.0f, 0.0f);
+            DrawCube({ 0.0f, -0.34f, 0.0f }, 0.19f, 0.66f, 0.21f, corJeans);
+            DrawCubeWires({ 0.0f, -0.34f, 0.0f }, 0.19f, 0.66f, 0.21f, corContorno);
+            DrawCube({ 0.0f, -0.70f, 0.04f }, 0.20f, 0.14f, 0.29f, corSapato);
+            DrawCubeWires({ 0.0f, -0.70f, 0.04f }, 0.20f, 0.14f, 0.29f, corContorno);
+        rlPopMatrix();
+
+        // Hierarquia do Tronco
+        rlPushMatrix();
+            rlTranslatef(0.0f, alturaQuadril + respiracao, 0.0f);
+            rlRotatef(inclinacaoTronco, 1.0f, 0.0f, 0.0f);
+            rlRotatef(gingadoTronco, 0.0f, 0.0f, 1.0f);
+
+            float centroTorsoY = 0.34f;
+            DrawCube({ 0.0f, centroTorsoY, 0.0f }, 0.48f, 0.66f, 0.26f, corJaqueta);
+            DrawCubeWires({ 0.0f, centroTorsoY, 0.0f }, 0.48f, 0.66f, 0.26f, corContorno);
+            DrawCube({ 0.0f, centroTorsoY + 0.02f, 0.135f }, 0.16f, 0.60f, 0.02f, corCamiseta);
+            DrawCube({ -0.14f, centroTorsoY + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
+            DrawCube({  0.14f, centroTorsoY + 0.30f, 0.12f }, 0.12f, 0.10f, 0.06f, corJaqueta);
+
+            // Lanterna no bolso
+            DrawCube({ -0.15f, centroTorsoY + 0.12f, 0.15f }, 0.07f, 0.16f, 0.07f, Color{ 30, 32, 35, 255 });
+            DrawCube({ -0.15f, centroTorsoY + 0.15f, 0.19f }, 0.06f, 0.06f, 0.02f, Color{ 255, 245, 200, 255 });
+
+            // Cabeca
+            rlPushMatrix();
+                rlTranslatef(0.0f, 0.84f, 0.0f);
+                rlRotatef(-inclinacaoTronco * 0.6f, 1.0f, 0.0f, 0.0f);
+                DrawCube({ 0.0f, 0.0f, 0.0f }, 0.28f, 0.31f, 0.28f, corPele);
+                DrawCubeWires({ 0.0f, 0.0f, 0.0f }, 0.28f, 0.31f, 0.28f, corContorno);
+                DrawCube({ -0.07f, 0.02f, 0.142f }, 0.04f, 0.03f, 0.01f, Color{ 25, 20, 20, 255 });
+                DrawCube({  0.07f, 0.02f, 0.142f }, 0.04f, 0.03f, 0.01f, Color{ 25, 20, 20, 255 });
+                DrawCube({ 0.0f, 0.13f, -0.01f }, 0.30f, 0.11f, 0.31f, corCabelo);
+                DrawCube({ 0.0f, 0.02f, -0.14f }, 0.30f, 0.26f, 0.06f, corCabelo);
+                DrawCube({ -0.14f, 0.04f, -0.02f }, 0.04f, 0.18f, 0.24f, corCabelo);
+                DrawCube({  0.14f, 0.04f, -0.02f }, 0.04f, 0.18f, 0.24f, corCabelo);
+            rlPopMatrix();
+
+            // Braco Esquerdo
+            rlPushMatrix();
+                rlTranslatef(-0.31f, 0.58f, 0.0f);
+                rlRotatef(-balancoBraco, 1.0f, 0.0f, 0.0f);
+                rlRotatef(4.0f, 0.0f, 0.0f, 1.0f);
+                DrawCube({ 0.0f, -0.25f, 0.0f }, 0.15f, 0.50f, 0.16f, corJaqueta);
+                DrawCubeWires({ 0.0f, -0.25f, 0.0f }, 0.15f, 0.50f, 0.16f, corContorno);
+                DrawCube({ 0.0f, -0.54f, 0.01f }, 0.11f, 0.12f, 0.13f, corPele);
+            rlPopMatrix();
+
+            // Braco Direito
+            rlPushMatrix();
+                rlTranslatef(0.31f, 0.58f, 0.0f);
+                rlRotatef(balancoBraco, 1.0f, 0.0f, 0.0f);
+                rlRotatef(-4.0f, 0.0f, 0.0f, 1.0f);
+                DrawCube({ 0.0f, -0.25f, 0.0f }, 0.15f, 0.50f, 0.16f, corJaqueta);
+                DrawCubeWires({ 0.0f, -0.25f, 0.0f }, 0.15f, 0.50f, 0.16f, corContorno);
+                DrawCube({ 0.0f, -0.54f, 0.01f }, 0.11f, 0.12f, 0.13f, corPele);
+            rlPopMatrix();
         rlPopMatrix();
     rlPopMatrix();
 }
-
-const char* vsCode =
-    "#version 100\n"
-    "attribute vec3 vertexPosition;\n"
-    "attribute vec2 vertexTexCoord;\n"
-    "attribute vec4 vertexColor;\n"
-    "uniform mat4 mvp;\n"
-    "uniform mat4 matModel;\n"
-    "varying vec3 fragPos;\n"
-    "varying vec2 fragTexCoord;\n"
-    "varying vec4 fragColor;\n"
-    "void main() {\n"
-    "    fragPos = vec3(matModel * vec4(vertexPosition, 1.0));\n"
-    "    fragTexCoord = vertexTexCoord;\n"
-    "    fragColor = vertexColor;\n"
-    "    gl_Position = mvp * vec4(vertexPosition, 1.0);\n"
-    "}\n";
-
-const char* fsCode =
-    "#version 100\n"
-    "precision mediump float;\n"
-    "varying vec3 fragPos;\n"
-    "varying vec2 fragTexCoord;\n"
-    "varying vec4 fragColor;\n"
-    "uniform sampler2D texture0;\n"
-    "uniform vec4 colDiffuse;\n"
-    "uniform vec3 lightPos;\n"
-    "uniform vec3 lightDir;\n"
-    "void main() {\n"
-    "    vec4 texel = texture2D(texture0, fragTexCoord) * colDiffuse * fragColor;\n"
-    "    vec3 toFrag = fragPos - lightPos;\n"
-    "    float dist = length(toFrag);\n"
-    "    float spot = dot(normalize(toFrag), normalize(lightDir));\n"
-    "    float cone = smoothstep(0.65, 0.93, spot);\n"
-    "    float atten = clamp(1.0 - dist / 22.0, 0.0, 1.0);\n"
-    "    float luz = 0.20 + (cone * atten * 1.05);\n"
-    "    // Becos laterais bem escuros quando longe da avenida central\n"
-    "    if (abs(fragPos.x) > 10.6) luz *= 0.35;\n"
-    "    // Neblina estilo Silent Hill (densa e cinza-azulada)\n"
-    "    float neblina = clamp((dist - 3.5) / 18.5, 0.0, 0.96);\n"
-    "    vec3 finalRgb = mix(texel.rgb * luz, vec3(0.58, 0.62, 0.66), neblina);\n"
-    "    gl_FragColor = vec4(finalRgb, texel.a);\n"
-    "}\n";
-
-Model modAsfalto, modCalcada, modPredio;
-bool modelosRuaProntos = false;
 
 void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
     rlPushMatrix();
@@ -388,7 +385,7 @@ int main() {
 
         float dt = GetFrameTime();
         if (std::abs(eixoX) > 0.15f) anguloHeroi -= eixoX * 140.0f * dt;
-        float passoAnim = 0.0f;
+        static float passoAnim = 0.0f;
         if (std::abs(eixoY) > 0.15f) {
             float rad = anguloHeroi * DEG2RAD;
             float vel = (-eixoY) * (agachado ? 2.2f : 4.5f) * dt;
