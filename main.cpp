@@ -165,67 +165,81 @@ Model modAsfalto, modCalcada, modPredio;
 bool modelosRuaProntos = false;
 
 
+Model modCarSedan, modCarPolice, modCarTaxi, modCarWheel;
+Texture2D texCarGrey, texCarGreen, texCarPolice, texCarTaxi, texCarWheel;
+float escalaCarroPS1 = 1.0f, offsetCarroY = 0.0f, escalaRodaPS1 = 1.0f;
+bool carrosPS1Prontos = false;
+int contadorCarroChamada = 0;
+
 void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
+    if (!carrosPS1Prontos) {
+        modCarSedan  = LoadModel("Car5.obj");
+        modCarPolice = LoadModel("Car5_Police.obj");
+        modCarTaxi   = LoadModel("Car5_Taxi.obj");
+        modCarWheel  = LoadModel("Wheel.obj");
+
+        texCarGrey   = LoadTexture("car5_grey.png");
+        texCarGreen  = LoadTexture("car5_green.png");
+        texCarPolice = LoadTexture("car5_police.png");
+        texCarTaxi   = LoadTexture("car5_taxi.png");
+        texCarWheel  = LoadTexture("wheel.png");
+
+        SetTextureFilter(texCarGrey, TEXTURE_FILTER_POINT);
+        SetTextureFilter(texCarGreen, TEXTURE_FILTER_POINT);
+        SetTextureFilter(texCarPolice, TEXTURE_FILTER_POINT);
+        SetTextureFilter(texCarTaxi, TEXTURE_FILTER_POINT);
+        SetTextureFilter(texCarWheel, TEXTURE_FILTER_POINT);
+
+        modCarSedan.materials.maps[MATERIAL_MAP_DIFFUSE].texture  = texCarGrey;
+        modCarPolice.materials.maps[MATERIAL_MAP_DIFFUSE].texture = texCarPolice;
+        modCarTaxi.materials.maps[MATERIAL_MAP_DIFFUSE].texture   = texCarTaxi;
+        modCarWheel.materials.maps[MATERIAL_MAP_DIFFUSE].texture  = texCarWheel;
+
+        modCarSedan.materials.shader  = shaderConsole;
+        modCarPolice.materials.shader = shaderConsole;
+        modCarTaxi.materials.shader   = shaderConsole;
+        modCarWheel.materials.shader  = shaderConsole;
+
+        BoundingBox bb = GetModelBoundingBox(modCarPolice);
+        float comp = std::max(bb.max.x - bb.min.x, bb.max.z - bb.min.z);
+        if (comp > 0.01f) {
+            escalaCarroPS1 = 4.35f / comp;
+            offsetCarroY   = -bb.min.y * escalaCarroPS1 + 0.18f;
+        }
+        BoundingBox bbW = GetModelBoundingBox(modCarWheel);
+        float diamW = bbW.max.y - bbW.min.y;
+        if (diamW > 0.01f) {
+            escalaRodaPS1 = 0.64f / diamW;
+        }
+        carrosPS1Prontos = true;
+    }
+
+    int tipo = contadorCarroChamada % 3;
+    contadorCarroChamada++;
+
     rlPushMatrix();
         rlTranslatef(x, 0.0f, z);
         rlRotatef(rotY, 0.0f, 1.0f, 0.0f);
 
-        Color corVidro     = { 18, 22, 28, 255 };
-        Color corPneu      = { 16, 16, 18, 255 };
-        Color corRoda      = { 95, 100, 108, 255 };
-        Color corParachoque= { 35, 38, 42, 255 };
-        Color corFarol     = { 185, 180, 155, 255 };
-        Color corLanternaT = { 120, 22, 22, 255 };
-        Color corContorno  = { 10, 12, 15, 255 };
+        // Sombra de contato escura embaixo do carro
+        DrawCylinder({ 0.0f, 0.02f, 0.0f }, 1.15f, 1.15f, 0.02f, 12, Color{ 5, 6, 8, 190 });
 
-        if (!modCarroPronto) {
-            Texture2D texFerr = LoadTexture("ferrugem.png");
-            SetTextureWrap(texFerr, TEXTURE_WRAP_REPEAT);
-            SetTextureFilter(texFerr, TEXTURE_FILTER_POINT);
-            modCarroBase = LoadModelFromMesh(GenMeshCube(1.92f, 0.56f, 4.20f));
-            modCarroBase.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texFerr;
-            modCarroBase.materials[0].shader = shaderConsole;
-            modCarroTeto = LoadModelFromMesh(GenMeshCube(1.66f, 0.52f, 2.25f));
-            modCarroTeto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texFerr;
-            modCarroTeto.materials[0].shader = shaderConsole;
-            modCarroPronto = true;
+        if (tipo == 0) {
+            DrawModelEx(modCarPolice, { 0.0f, offsetCarroY, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { escalaCarroPS1, escalaCarroPS1, escalaCarroPS1 }, WHITE);
+        } else if (tipo == 1) {
+            DrawModelEx(modCarTaxi, { 0.0f, offsetCarroY, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { escalaCarroPS1, escalaCarroPS1, escalaCarroPS1 }, WHITE);
+        } else {
+            modCarSedan.materials.maps[MATERIAL_MAP_DIFFUSE].texture = (corLataria.r > corLataria.g) ? texCarGrey : texCarGreen;
+            DrawModelEx(modCarSedan, { 0.0f, offsetCarroY, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { escalaCarroPS1, escalaCarroPS1, escalaCarroPS1 }, WHITE);
         }
-        // Base / Chassi inferior texturizado
-        DrawModel(modCarroBase, { 0.0f, 0.52f, 0.0f }, 1.0f, corLataria);
-        DrawCubeWires({ 0.0f, 0.52f, 0.0f }, 1.92f, 0.56f, 4.20f, corContorno);
 
-        // Cabine / Teto texturizado
-        DrawModel(modCarroTeto, { 0.0f, 1.05f, -0.15f }, 1.0f, corLataria);
-        DrawCubeWires({ 0.0f, 1.05f, -0.15f }, 1.66f, 0.52f, 2.25f, corContorno);
-
-        // Vidros (Para-brisa, traseiro e laterais)
-        DrawCube({ 0.0f, 1.04f,  0.98f }, 1.50f, 0.40f, 0.04f, corVidro);
-        DrawCube({ 0.0f, 1.04f, -1.28f }, 1.50f, 0.40f, 0.04f, corVidro);
-        DrawCube({ -0.84f, 1.04f, -0.15f }, 0.04f, 0.38f, 1.95f, corVidro);
-        DrawCube({  0.84f, 1.04f, -0.15f }, 0.04f, 0.38f, 1.95f, corVidro);
-
-        // Para-choques dianteiro e traseiro
-        DrawCube({ 0.0f, 0.36f,  2.14f }, 1.98f, 0.22f, 0.16f, corParachoque);
-        DrawCube({ 0.0f, 0.36f, -2.14f }, 1.98f, 0.22f, 0.16f, corParachoque);
-
-        // Farois e Lanternas traseiras
-        DrawCube({ -0.66f, 0.58f,  2.11f }, 0.36f, 0.16f, 0.04f, corFarol);
-        DrawCube({  0.66f, 0.58f,  2.11f }, 0.36f, 0.16f, 0.04f, corFarol);
-        DrawCube({ -0.66f, 0.58f, -2.11f }, 0.36f, 0.16f, 0.04f, corLanternaT);
-        DrawCube({  0.66f, 0.58f, -2.11f }, 0.36f, 0.16f, 0.04f, corLanternaT);
-
-        // Sombra de contato no chao embaixo do carro
-        DrawCylinder(Vector3{ 0.0f, 0.01f, 0.0f }, 1.25f, 1.25f, 0.01f, 12, Color{ 0, 0, 0, 145 });
-
-        // 4 Rodas
-        float posRodasX[2] = { -0.94f, 0.94f };
-        float posRodasZ[2] = {  1.30f, -1.30f };
-        for (int ix = 0; ix < 2; ix++) {
-            for (int iz = 0; iz < 2; iz++) {
-                DrawCube({ posRodasX[ix], 0.32f, posRodasZ[iz] }, 0.22f, 0.62f, 0.62f, corPneu);
-                DrawCube({ posRodasX[ix] * 1.02f, 0.32f, posRodasZ[iz] }, 0.23f, 0.32f, 0.32f, corRoda);
-            }
-        }
+        // 4 Rodas 3D PS1
+        float rx = 0.86f;
+        float rz = 1.32f;
+        DrawModelEx(modCarWheel, { -rx, 0.32f,  rz }, { 0.0f, 1.0f, 0.0f }, 180.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
+        DrawModelEx(modCarWheel, {  rx, 0.32f,  rz }, { 0.0f, 1.0f, 0.0f },   0.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
+        DrawModelEx(modCarWheel, { -rx, 0.32f, -rz }, { 0.0f, 1.0f, 0.0f }, 180.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
+        DrawModelEx(modCarWheel, {  rx, 0.32f, -rz }, { 0.0f, 1.0f, 0.0f },   0.0f, { escalaRodaPS1, escalaRodaPS1, escalaRodaPS1 }, WHITE);
     rlPopMatrix();
 }
 
@@ -515,7 +529,8 @@ int main() {
         ClearBackground(Color{ 8, 10, 16, 255 });
         BeginMode3D(camera);
             if (optLanterna) BeginShaderMode(shaderConsole);
-            desenharRuaSilentHill();
+            contadorCarroChamada = 0;
+                desenharRuaSilentHill();
             if (optLanterna) EndShaderMode();
             desenharBonecoPS1(posHeroi, anguloHeroi, passoAnim, agachado);
         EndMode3D();
