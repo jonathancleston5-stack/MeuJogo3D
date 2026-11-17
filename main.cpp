@@ -72,11 +72,11 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
     bool andando = (cicloPasso > 0.01f);
     if (animCountHarry > 0 && animsHarry != nullptr) {
         if (andando) {
-            animFrameHarry = (animFrameHarry + 1) % animsHarry.frameCount;
+            animFrameHarry = (animFrameHarry + 1) % animsHarry[0].frameCount;
         } else {
             animFrameHarry = 0;
         }
-        UpdateModelAnimation(modHarry, animsHarry, animFrameHarry);
+        UpdateModelAnimation(modHarry, animsHarry[0], animFrameHarry);
     }
 
     float puloPasso = andando ? std::abs(std::cos(cicloPasso)) * 0.04f : 0.0f;
