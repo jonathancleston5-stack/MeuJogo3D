@@ -57,6 +57,9 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
         float alturaQuadril    = agachado ? 0.52f : (0.78f + puloPasso);
         float inclinacaoTronco = agachado ? 22.0f : (andando ? 6.0f : 0.0f);
 
+        // Sombra de contato nos pes do personagem
+        DrawCylinder(Vector3{ 0.0f, 0.01f, 0.0f }, 0.42f, 0.42f, 0.01f, 12, Color{ 0, 0, 0, 140 });
+
         // Perna Esquerda
         rlPushMatrix();
             rlTranslatef(-0.13f, alturaQuadril, 0.0f);
@@ -215,6 +218,9 @@ void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
         DrawCube({ -0.66f, 0.58f, -2.11f }, 0.36f, 0.16f, 0.04f, corLanternaT);
         DrawCube({  0.66f, 0.58f, -2.11f }, 0.36f, 0.16f, 0.04f, corLanternaT);
 
+        // Sombra de contato no chao embaixo do carro
+        DrawCylinder(Vector3{ 0.0f, 0.01f, 0.0f }, 1.25f, 1.25f, 0.01f, 12, Color{ 0, 0, 0, 145 });
+
         // 4 Rodas
         float posRodasX[2] = { -0.94f, 0.94f };
         float posRodasZ[2] = {  1.30f, -1.30f };
@@ -235,13 +241,43 @@ void desenharRuaSilentHill() {
     }
 
     if (!modelosRuaProntos) {
-        Image i1 = GenImageChecked(64, 64, 8, 8, Color{34,36,40,255}, Color{42,44,48,255});
+        // Textura procedural de asfalto rugoso e manchado (sem xadrez)
+        Image i1 = GenImagePerlinNoise(128, 128, 12, 34, 6.5f);
+        ImageColorTint(&i1, Color{ 75, 80, 88, 255 });
+        for (int py = 0; py < 128; py++) {
+            for (int px = 0; px < 128; px++) {
+                int r = ((px * 73 + py * 137) % 19) - 9;
+                Color c = GetImageColor(i1, px, py);
+                c.r = (unsigned char)Clamp(c.r + r, 15, 255);
+                c.g = (unsigned char)Clamp(c.g + r, 15, 255);
+                c.b = (unsigned char)Clamp(c.b + r + 2, 18, 255);
+                ImageDrawPixel(&i1, px, py, c);
+            }
+        }
         modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 1, 1));
-        modAsfalto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i1);
+        Texture2D texAsf = LoadTextureFromImage(i1);
+        SetTextureFilter(texAsf, TEXTURE_FILTER_POINT);
+        modAsfalto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texAsf;
         UnloadImage(i1);
-        Image i2 = GenImageChecked(32, 32, 8, 8, Color{88,92,96,255}, Color{100,104,110,255});
+
+        // Textura procedural de concreto gasto para calcadas e predios
+        Image i2 = GenImagePerlinNoise(128, 128, 55, 19, 4.5f);
+        ImageColorTint(&i2, Color{ 135, 138, 142, 255 });
+        for (int py = 0; py < 128; py++) {
+            for (int px = 0; px < 128; px++) {
+                int r = ((px * 31 + py * 97) % 15) - 7;
+                if (py % 32 == 0) r -= 18; // Juntas de dilatacao do concreto
+                Color c = GetImageColor(i2, px, py);
+                c.r = (unsigned char)Clamp(c.r + r, 25, 255);
+                c.g = (unsigned char)Clamp(c.g + r, 25, 255);
+                c.b = (unsigned char)Clamp(c.b + r, 25, 255);
+                ImageDrawPixel(&i2, px, py, c);
+            }
+        }
         modCalcada = LoadModelFromMesh(GenMeshCube(4.4f, 0.24f, 80.0f));
-        modCalcada.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTextureFromImage(i2);
+        Texture2D texCalc = LoadTextureFromImage(i2);
+        SetTextureFilter(texCalc, TEXTURE_FILTER_POINT);
+        modCalcada.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texCalc;
         UnloadImage(i2);
         Image i3 = GenImageChecked(32, 32, 4, 8, Color{72,76,80,255}, Color{60,64,68,255});
         modPredio = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
