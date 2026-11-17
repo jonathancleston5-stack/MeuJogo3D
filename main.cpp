@@ -112,7 +112,7 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
 
                 modelosExtrasProntos = true;
             }
-            DrawModelEx(modLanterna, { -0.16f, centroTorsoY + 0.14f, 0.17f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { escalaLanterna, escalaLanterna, escalaLanterna }, WHITE);
+            // Lanterna movida para a mao direita
 
             // Cabeca
             rlPushMatrix();
@@ -180,26 +180,18 @@ const char* fsCode =
     "uniform int lanternaOn;\n"
     "void main() {\n"
     "    vec4 texel = texture2D(texture0, fragTexCoord) * fragColor;\n"
-    "    vec3 luzTotal = vec3(0.08, 0.09, 0.13);\n"
-    "    // 1. Lanterna do jogador (liga/desliga no botao Y)\n"
+    "    // Noite bem escura para destacar a lanterna\n"
+    "    vec3 luzTotal = vec3(0.04, 0.05, 0.08);\n"
     "    if (lanternaOn == 1) {\n"
     "        vec3 toFrag = fragPos - lightPos;\n"
     "        float distLuz = length(toFrag);\n"
     "        float spot = dot(normalize(toFrag), normalize(lightDir));\n"
-    "        float cone = smoothstep(0.68, 0.92, spot);\n"
-    "        float nucleo = smoothstep(0.88, 0.99, spot);\n"
-    "        float atten = clamp(1.0 - distLuz / 26.0, 0.0, 1.0);\n"
+    "        float cone = smoothstep(0.65, 0.90, spot);\n"
+    "        float nucleo = smoothstep(0.86, 0.98, spot);\n"
+    "        float atten = clamp(1.0 - distLuz / 28.0, 0.0, 1.0);\n"
     "        atten = atten * atten;\n"
-    "        float feixe = (cone * 2.2 + nucleo * 2.5) * atten;\n"
-    "        luzTotal += vec3(1.0, 0.94, 0.78) * feixe;\n"
-    "    }\n"
-    "    // 2. Luzes dos postes ao longo da rua (a cada 16m em Z, X = +-6.8)\n"
-    "    for (float pz = -32.0; pz <= 32.0; pz += 16.0) {\n"
-    "        float dEsq = length(fragPos - vec3(-6.8, 4.8, pz));\n"
-    "        float dDir = length(fragPos - vec3( 6.8, 4.8, pz));\n"
-    "        float pEsq = clamp(1.0 - dEsq / 11.5, 0.0, 1.0);\n"
-    "        float pDir = clamp(1.0 - dDir / 11.5, 0.0, 1.0);\n"
-    "        luzTotal += vec3(1.0, 0.80, 0.45) * (pEsq * pEsq + pDir * pDir) * 0.85;\n"
+    "        float feixe = (cone * 2.8 + nucleo * 3.2) * atten;\n"
+    "        luzTotal += vec3(1.0, 0.95, 0.80) * feixe;\n"
     "    }\n"
     "    gl_FragColor = vec4(texel.rgb * luzTotal, texel.a);\n"
     "}\n";
@@ -365,13 +357,7 @@ void desenharRuaSilentHill() {
         }
     }
 
-        // Postes 3D estilo PSX (poste.glb) nos dois lados da calcada
-    if (modelosExtrasProntos) {
-        for (float pz = -30.0f; pz <= 30.0f; pz += 15.0f) {
-            DrawModelEx(modPoste, Vector3{ -6.8f, 0.12f, pz }, Vector3{ 0.0f, 1.0f, 0.0f }, 0.0f, Vector3{ escalaPoste, escalaPoste, escalaPoste }, WHITE);
-            DrawModelEx(modPoste, Vector3{  6.8f, 0.12f, pz }, Vector3{ 0.0f, 1.0f, 0.0f }, 180.0f, Vector3{ escalaPoste, escalaPoste, escalaPoste }, WHITE);
-        }
-    }
+            // Rua limpa sem postes
     desenharCarroAbandonado(-2.8f, -14.0f,  14.0f, Color{ 82, 46, 42, 255 });
     desenharCarroAbandonado( 2.9f,   7.5f, -165.0f, Color{ 52, 64, 72, 255 });
     desenharCarroAbandonado(-2.4f,  23.0f,  -8.0f, Color{ 76, 74, 62, 255 });
