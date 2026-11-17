@@ -263,9 +263,9 @@ void desenharLuaOlho(Vector3 posJogador) {
 
     rlPushMatrix();
         rlTranslatef(posLua.x, posLua.y, posLua.z);
-        rlRotatef(90.0f, 0.0f, 1.0f, 0.0f);
-        rlRotatef(18.0f, 0.0f, 0.0f, 1.0f);
-        rlRotatef(olharX, 0.0f, 1.0f, 0.0f);
+        float giroProprio = (float)GetTime() * 35.0f;
+        rlRotatef(15.0f, 1.0f, 0.0f, 0.0f);
+        rlRotatef(giroProprio, 0.0f, 1.0f, 0.0f);
         DrawModelEx(
             modLuaOlho,
             { 0.0f, 0.0f, 0.0f },
@@ -343,7 +343,12 @@ void desenharRuaSilentHill() {
         // Predios 3D reais (quarteirao.glb) nos dois lados da avenida
     if (!quarteiraoPronto) {
         modQuarteirao = LoadModel("quarteirao.glb");
+        Texture2D texFallback = LoadTexture("parede.png");
+        SetTextureWrap(texFallback, TEXTURE_WRAP_REPEAT);
         for (int i = 0; i < modQuarteirao.materialCount; i++) {
+            if (modQuarteirao.materials[i].maps[MATERIAL_MAP_DIFFUSE].texture.id <= 1) {
+                modQuarteirao.materials[i].maps[MATERIAL_MAP_DIFFUSE].texture = texFallback;
+            }
             modQuarteirao.materials[i].shader = shaderConsole;
         }
         quarteiraoPronto = true;
