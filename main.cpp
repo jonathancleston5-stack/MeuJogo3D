@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "raylib.h"
 #include "rlgl.h"
 #include <cmath>
@@ -248,9 +249,9 @@ void desenharRuaSilentHill() {
             for (int px = 0; px < 128; px++) {
                 int r = ((px * 73 + py * 137) % 19) - 9;
                 Color c = GetImageColor(i1, px, py);
-                c.r = (unsigned char)Clamp(c.r + r, 15, 255);
-                c.g = (unsigned char)Clamp(c.g + r, 15, 255);
-                c.b = (unsigned char)Clamp(c.b + r + 2, 18, 255);
+                c.r = (unsigned char)std::clamp(c.r + r, 15, 255);
+                c.g = (unsigned char)std::clamp(c.g + r, 15, 255);
+                c.b = (unsigned char)std::clamp(c.b + r + 2, 18, 255);
                 ImageDrawPixel(&i1, px, py, c);
             }
         }
@@ -268,9 +269,9 @@ void desenharRuaSilentHill() {
                 int r = ((px * 31 + py * 97) % 15) - 7;
                 if (py % 32 == 0) r -= 18; // Juntas de dilatacao do concreto
                 Color c = GetImageColor(i2, px, py);
-                c.r = (unsigned char)Clamp(c.r + r, 25, 255);
-                c.g = (unsigned char)Clamp(c.g + r, 25, 255);
-                c.b = (unsigned char)Clamp(c.b + r, 25, 255);
+                c.r = (unsigned char)std::clamp(c.r + r, 25, 255);
+                c.g = (unsigned char)std::clamp(c.g + r, 25, 255);
+                c.b = (unsigned char)std::clamp(c.b + r, 25, 255);
                 ImageDrawPixel(&i2, px, py, c);
             }
         }
