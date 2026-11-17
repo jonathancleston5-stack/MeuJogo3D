@@ -131,6 +131,53 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
     rlPopMatrix();
 }
 
+const char* vsCode =
+    "#version 100\n"
+    "attribute vec3 vertexPosition;\n"
+    "attribute vec2 vertexTexCoord;\n"
+    "attribute vec4 vertexColor;\n"
+    "uniform mat4 mvp;\n"
+    "uniform mat4 matModel;\n"
+    "varying vec3 fragPos;\n"
+    "varying vec2 fragTexCoord;\n"
+    "varying vec4 fragColor;\n"
+    "void main() {\n"
+    "    fragPos = vec3(matModel * vec4(vertexPosition, 1.0));\n"
+    "    fragTexCoord = vertexTexCoord;\n"
+    "    fragColor = vertexColor;\n"
+    "    gl_Position = mvp * vec4(vertexPosition, 1.0);\n"
+    "}\n";
+
+const char* fsCode =
+    "#version 100\n"
+    "precision mediump float;\n"
+    "varying vec3 fragPos;\n"
+    "varying vec2 fragTexCoord;\n"
+    "varying vec4 fragColor;\n"
+    "uniform sampler2D texture0;\n"
+    "uniform vec4 colDiffuse;\n"
+    "uniform vec3 lightPos;\n"
+    "uniform vec3 lightDir;\n"
+    "void main() {\n"
+    "    vec4 texel = texture2D(texture0, fragTexCoord) * colDiffuse * fragColor;\n"
+    "    vec3 toFrag = fragPos - lightPos;\n"
+    "    float dist = length(toFrag);\n"
+    "    float spot = dot(normalize(toFrag), normalize(lightDir));\n"
+    "    float cone = smoothstep(0.65, 0.93, spot);\n"
+    "    float atten = clamp(1.0 - dist / 22.0, 0.0, 1.0);\n"
+    "    float luz = 0.20 + (cone * atten * 1.05);\n"
+    "    // Becos laterais bem escuros quando longe da avenida central\n"
+    "    if (abs(fragPos.x) > 10.6) luz *= 0.35;\n"
+    "    // Neblina estilo Silent Hill (densa e cinza-azulada)\n"
+    "    float neblina = clamp((dist - 3.5) / 18.5, 0.0, 0.96);\n"
+    "    vec3 finalRgb = mix(texel.rgb * luz, vec3(0.58, 0.62, 0.66), neblina);\n"
+    "    gl_FragColor = vec4(finalRgb, texel.a);\n"
+    "}\n";
+
+Model modAsfalto, modCalcada, modPredio;
+bool modelosRuaProntos = false;
+
+
 void desenharCarroAbandonado(float x, float z, float rotY, Color corLataria) {
     rlPushMatrix();
         rlTranslatef(x, 0.0f, z);
