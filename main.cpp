@@ -153,19 +153,24 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
 
         DrawModelEx(
             modHarry,
-            { offsetHarryX, offsetHarryY, offsetHarryZ },
+            { offsetHarryX, offsetHarryY + 0.04f, offsetHarryZ },
             { 0.0f, 1.0f, 0.0f },
             0.0f,
             { escalaHarry, escalaY, escalaHarry },
             Color{ 165, 170, 185, 255 }
         );
 
-        float balanco = andando ? (std::sin(timerAnimHarry * 0.22f) * 0.035f) : 0.0f;
-        float altMao = (agachado ? 0.60f : 0.82f) + balanco;
-        float xMao = -0.24f;
-        DrawCylinderEx({ xMao, altMao, -0.05f }, { xMao, altMao - 0.02f, 0.16f }, 0.032f, 0.032f, 8, Color{ 35, 38, 44, 255 });
-        DrawCylinderEx({ xMao, altMao - 0.02f, 0.16f }, { xMao, altMao - 0.03f, 0.23f }, 0.036f, 0.058f, 8, Color{ 160, 165, 175, 255 });
-        DrawSphereEx({ xMao, altMao - 0.03f, 0.235f }, 0.046f, 6, 6, Color{ 255, 248, 195, 255 });
+        // Lanterna de clipe (Pocket Clip) presa no bolso esquerdo do peito
+        float oscPeito = andando ? (std::sin(timerAnimHarry * 0.44f) * 0.012f) : 0.0f;
+        float yPeito = (agachado ? 0.90f : 1.24f) + oscPeito;
+        float xPeito = 0.09f;
+        float zPeito = 0.13f;
+        // Corpo vertical da lanterna e clipe metalico de bolso
+        DrawCube({ xPeito, yPeito, zPeito }, 0.048f, 0.115f, 0.042f, Color{ 32, 36, 42, 255 });
+        DrawCube({ xPeito + 0.016f, yPeito - 0.01f, zPeito - 0.012f }, 0.012f, 0.085f, 0.025f, Color{ 150, 155, 165, 255 });
+        // Cabeca em 90 graus e lente iluminada apontando para frente
+        DrawCylinderEx({ xPeito, yPeito + 0.035f, zPeito }, { xPeito, yPeito + 0.035f, zPeito + 0.048f }, 0.026f, 0.032f, 10, Color{ 130, 135, 145, 255 });
+        DrawSphereEx({ xPeito, yPeito + 0.035f, zPeito + 0.050f }, 0.026f, 8, 8, Color{ 255, 248, 195, 255 });
     rlPopMatrix();
 }
 
@@ -580,6 +585,9 @@ int main() {
                               (std::hypot(nx - (-2.4f), nz - ( 23.0f)) < 1.8f);
             if (!bateuCarro && nx > -13.2f && nx < 13.2f) posHeroi.x = nx;
             if (!bateuCarro && nz > -38.5f && nz < 38.5f) posHeroi.z = nz;
+            if (std::abs(posHeroi.x) > 10.4f) posHeroi.y = 0.10f;
+            else if (std::abs(posHeroi.x) > 6.0f) posHeroi.y = 0.24f;
+            else posHeroi.y = 0.0f;
             passoAnim = (float)GetTime() * 10.0f;
         } else {
             passoAnim = 0.0f;
@@ -588,14 +596,14 @@ int main() {
         float radCam = anguloHeroi * DEG2RAD;
         float dirX = std::sin(radCam), dirZ = std::cos(radCam);
         float rightX = -dirZ, rightZ = dirX;
-        float altOlhos = agachado ? 1.15f : 1.52f;
+        float altOlhos = posHeroi.y + (agachado ? 1.15f : 1.52f);
         Vector3 alvoCam = { posHeroi.x - (dirX * 2.45f) + (rightX * 0.58f), altOlhos + 0.12f, posHeroi.z - (dirZ * 2.45f) + (rightZ * 0.58f) };
         if (alvoCam.x < -12.8f) alvoCam.x = -12.8f; if (alvoCam.x > 12.8f) alvoCam.x = 12.8f;
         if (alvoCam.z < -38.5f) alvoCam.z = -38.5f; if (alvoCam.z > 38.5f) alvoCam.z = 38.5f;
         camera.position = alvoCam;
         camera.target = { posHeroi.x + (dirX * 3.5f) + (rightX * 0.30f), altOlhos - 0.12f, posHeroi.z + (dirZ * 3.5f) + (rightZ * 0.30f) };
 
-        float posLuz[3] = { posHeroi.x + (rightX * 0.26f) + (dirX * 0.25f), altOlhos - 0.45f, posHeroi.z + (rightZ * 0.26f) + (dirZ * 0.25f) };
+        float posLuz[3] = { posHeroi.x - (rightX * 0.09f) + (dirX * 0.18f), posHeroi.y + (agachado ? 0.93f : 1.27f), posHeroi.z - (rightZ * 0.09f) + (dirZ * 0.18f) };
         float dirLuz[3] = { dirX, -0.16f, dirZ };
         SetShaderValue(shaderConsole, locLightPos, posLuz, SHADER_UNIFORM_VEC3);
         SetShaderValue(shaderConsole, locLightDir, dirLuz, SHADER_UNIFORM_VEC3);
