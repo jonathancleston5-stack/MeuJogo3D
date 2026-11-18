@@ -150,7 +150,7 @@ const char* fsCode =
     "void main() {\n"
     "    vec4 texel = texture2D(texture0, fragTexCoord) * fragColor;\n"
     "    // Noite bem escura para destacar a lanterna\n"
-    "    vec3 luzTotal = vec3(0.04, 0.05, 0.08);\n"
+    "    vec3 luzTotal = (lanternaOn == 1) ? vec3(0.07, 0.08, 0.12) : vec3(0.75, 0.78, 0.85);\n"
     "    if (lanternaOn == 1) {\n"
     "        vec3 toFrag = fragPos - lightPos;\n"
     "        float distLuz = length(toFrag);\n"
@@ -263,9 +263,9 @@ void desenharLuaOlho(Vector3 posJogador) {
 
     rlPushMatrix();
         rlTranslatef(posLua.x, posLua.y, posLua.z);
-        float giroProprio = (float)GetTime() * 35.0f;
+        float giroOlho = olharX + std::sin((float)GetTime() * 1.5f) * 12.0f;
         rlRotatef(15.0f, 1.0f, 0.0f, 0.0f);
-        rlRotatef(giroProprio, 0.0f, 1.0f, 0.0f);
+        rlRotatef(giroOlho, 0.0f, 1.0f, 0.0f);
         DrawModelEx(
             modLuaOlho,
             { 0.0f, 0.0f, 0.0f },
@@ -294,10 +294,11 @@ void desenharRuaSilentHill() {
                 ImageDrawPixel(&i1, px, py, c);
             }
         }
-        modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 1, 1));
+        modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 12, 80));
         Texture2D texAsf = LoadTextureFromImage(i1);
         SetTextureFilter(texAsf, TEXTURE_FILTER_POINT);
         modAsfalto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texAsf;
+        modAsfalto.materials[0].shader = shaderConsole;
         UnloadImage(i1);
 
         // Textura procedural de concreto gasto para calcadas e predios
@@ -318,8 +319,8 @@ void desenharRuaSilentHill() {
         Texture2D texCalc = LoadTextureFromImage(i2);
         SetTextureFilter(texCalc, TEXTURE_FILTER_POINT);
         modCalcada.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texCalc;
+        modCalcada.materials[0].shader = shaderConsole;
         UnloadImage(i2);
-        Image i3 = GenImageChecked(32, 32, 4, 8, Color{72,76,80,255}, Color{60,64,68,255});
         modPredio = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
         Texture2D texParede = LoadTexture("parede.png");
         SetTextureWrap(texParede, TEXTURE_WRAP_REPEAT);
@@ -514,6 +515,8 @@ int main() {
             if (!bateuCarro && nx > -13.2f && nx < 13.2f) posHeroi.x = nx;
             if (!bateuCarro && nz > -38.5f && nz < 38.5f) posHeroi.z = nz;
             passoAnim = (float)GetTime() * 10.0f;
+        } else {
+            passoAnim = 0.0f;
         }
 
         float radCam = anguloHeroi * DEG2RAD;
