@@ -118,7 +118,6 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
         modHarry = LoadModel("personagem.gltf");
         BoundingBox bb = GetModelBoundingBox(modHarry);
         float alt = bb.max.y - bb.min.y;
-        float largMaxX = std::max(std::abs(bb.min.x), std::abs(bb.max.x));
         if (alt > 0.001f) {
             escalaHarry = 1.75f / alt;
             offsetHarryY = -bb.min.y * escalaHarry;
@@ -131,19 +130,6 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             if (std::strstr(nm, "Walk") != nullptr || std::strstr(nm, "walk") != nullptr) idxWalk = i;
             if (std::strstr(nm, "Idle") != nullptr || std::strstr(nm, "idle") != nullptr) idxIdle = i;
         }
-
-        shaderHarry = LoadShaderFromMemory(vsHarry, fsHarry);
-        int locMinY = GetShaderLocation(shaderHarry, "minY");
-        int locAltRaw = GetShaderLocation(shaderHarry, "altRaw");
-        int locMaxX = GetShaderLocation(shaderHarry, "maxX");
-        SetShaderValue(shaderHarry, locMinY, &bb.min.y, SHADER_UNIFORM_FLOAT);
-        SetShaderValue(shaderHarry, locAltRaw, &alt, SHADER_UNIFORM_FLOAT);
-        SetShaderValue(shaderHarry, locMaxX, &largMaxX, SHADER_UNIFORM_FLOAT);
-
-        for (int i = 0; i < modHarry.materialCount; i++) {
-            modHarry.materials[i].shader = shaderHarry;
-        }
-
         harryPronto = true;
     }
 
@@ -170,13 +156,13 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             { offsetHarryX, offsetHarryY, offsetHarryZ },
             { 0.0f, 1.0f, 0.0f },
             0.0f,
-            { escalaHarry * 1.08f, escalaY, escalaHarry * 1.08f },
-            WHITE
+            { escalaHarry, escalaY, escalaHarry },
+            Color{ 165, 170, 185, 255 }
         );
 
         float balanco = andando ? (std::sin(timerAnimHarry * 0.22f) * 0.035f) : 0.0f;
         float altMao = (agachado ? 0.60f : 0.82f) + balanco;
-        float xMao = -0.25f;
+        float xMao = -0.24f;
         DrawCylinderEx({ xMao, altMao, -0.05f }, { xMao, altMao - 0.02f, 0.16f }, 0.032f, 0.032f, 8, Color{ 35, 38, 44, 255 });
         DrawCylinderEx({ xMao, altMao - 0.02f, 0.16f }, { xMao, altMao - 0.03f, 0.23f }, 0.036f, 0.058f, 8, Color{ 160, 165, 175, 255 });
         DrawSphereEx({ xMao, altMao - 0.03f, 0.235f }, 0.046f, 6, 6, Color{ 255, 248, 195, 255 });
@@ -536,12 +522,13 @@ int main() {
         }
 
         Rectangle btnMenuHud = { sw - 340.0f, 28.0f, 230.0f, 78.0f };
-        Vector2 baseAnalogico = { 230.0f, sh - 205.0f };
-        float raioBase = 128.0f, eixoX = 0.0f, eixoY = 0.0f;
+        Vector2 baseAnalogico = { 310.0f, sh - 275.0f };
+        float raioBase = 175.0f, eixoX = 0.0f, eixoY = 0.0f;
         Vector2 pinoAnalogico = baseAnalogico;
-        Vector2 posBtnA = { sw - 275.0f, sh - 125.0f }, posBtnB = { sw - 180.0f, sh - 215.0f };
-        Vector2 posBtnX = { sw - 370.0f, sh - 215.0f }, posBtnY = { sw - 275.0f, sh - 305.0f };
-        float raioBtn = 52.0f;
+        float cxBtns = sw - 330.0f, cyBtns = sh - 275.0f, distBtns = 135.0f;
+        Vector2 posBtnA = { cxBtns, cyBtns + distBtns }, posBtnB = { cxBtns + distBtns, cyBtns };
+        Vector2 posBtnX = { cxBtns - distBtns, cyBtns }, posBtnY = { cxBtns, cyBtns - distBtns };
+        float raioBtn = 74.0f;
         bool btnAPress = false, btnBPress = false, btnXPress = false, btnYPress = false;
 
         int tc = GetTouchPointCount();
@@ -633,14 +620,14 @@ int main() {
 
         DrawCircleV(baseAnalogico, raioBase, Color{ 20, 26, 32, 195 });
         DrawCircleLines((int)baseAnalogico.x, (int)baseAnalogico.y, raioBase, Color{ 115, 140, 160, 235 });
-        DrawCircleV(pinoAnalogico, 54.0f, Color{ 58, 68, 78, 240 });
-        DrawCircleV(pinoAnalogico, 26.0f, Color{ 36, 42, 50, 245 });
+        DrawCircleV(pinoAnalogico, 76.0f, Color{ 58, 68, 78, 240 });
+        DrawCircleV(pinoAnalogico, 38.0f, Color{ 36, 42, 50, 245 });
 
         auto btnXbox = [&](Vector2 c, const char* txt, Color cor, bool on) {
             DrawCircleV(c, raioBtn, Color{ 14, 18, 22, 225 });
             DrawCircleV(c, raioBtn - 5.0f, on ? WHITE : Color{ cor.r, cor.g, cor.b, 225 });
-            int lw = MeasureText(txt, 34);
-            DrawText(txt, (int)c.x - lw/2, (int)c.y - 17, 34, on ? BLACK : WHITE);
+            int lw = MeasureText(txt, 46);
+            DrawText(txt, (int)c.x - lw/2, (int)c.y - 23, 46, on ? BLACK : WHITE);
         };
         btnXbox(posBtnA, "A", Color{ 46, 180, 75, 255 }, btnAPress);
         btnXbox(posBtnB, "B", Color{ 210, 52, 52, 255 }, btnBPress);
