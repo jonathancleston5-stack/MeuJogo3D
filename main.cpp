@@ -36,6 +36,56 @@ void carregarConfig(bool &lanterna, int &fps, bool &som, bool &showFps, int &niv
 }
 
 Shader shaderConsole;
+Shader shaderHarry;
+int locAltMaxHarry = -1;
+
+const char* vsHarry =
+    "#version 100\n"
+    "attribute vec3 vertexPosition;\n"
+    "attribute vec2 vertexTexCoord;\n"
+    "attribute vec4 vertexColor;\n"
+    "uniform mat4 mvp;\n"
+    "uniform mat4 matModel;\n"
+    "varying vec3 fragPos;\n"
+    "varying vec2 fragTexCoord;\n"
+    "varying vec4 fragColor;\n"
+    "void main() {\n"
+    "    fragPos = vec3(matModel * vec4(vertexPosition, 1.0));\n"
+    "    fragTexCoord = vertexTexCoord;\n"
+    "    fragColor = vertexColor;\n"
+    "    gl_Position = mvp * vec4(vertexPosition, 1.0);\n"
+    "}\n";
+
+const char* fsHarry =
+    "#version 100\n"
+    "precision mediump float;\n"
+    "varying vec3 fragPos;\n"
+    "varying vec2 fragTexCoord;\n"
+    "varying vec4 fragColor;\n"
+    "uniform sampler2D texture0;\n"
+    "uniform float altMax;\n"
+    "void main() {\n"
+    "    vec4 texel = texture2D(texture0, fragTexCoord) * fragColor;\n"
+    "    float h = clamp(fragPos.y / altMax, 0.0, 1.0);\n"
+    "    bool ehPele = (texel.r > 0.36 && texel.r > texel.b * 1.25 && texel.g > texel.b * 1.05);\n"
+    "    float grao = fract(sin(dot(floor(fragPos.xy * 42.0), vec2(12.9898, 78.233))) * 43758.5453) * 0.05 - 0.025;\n"
+    "    float dobra = sin(fragPos.x * 16.0) * 0.025 + cos(fragPos.y * 20.0) * 0.02;\n"
+    "    vec3 cor = texel.rgb;\n"
+    "    if (h < 0.095) {\n"
+    "        cor = vec3(0.12, 0.08, 0.06) + vec3(grao * 0.5);\n"
+    "    } else if (h < 0.42) {\n"
+    "        cor = vec3(0.22, 0.28, 0.38) + vec3(grao + dobra);\n"
+    "    } else if (h < 0.495) {\n"
+    "        if (!ehPele) cor = vec3(0.21, 0.27, 0.37) + vec3(grao + dobra);\n"
+    "    } else if (h < 0.525) {\n"
+    "        if (!ehPele) cor = vec3(0.11, 0.08, 0.05);\n"
+    "    } else if (h < 0.785) {\n"
+    "        if (!ehPele) cor = vec3(0.42, 0.25, 0.14) + vec3(grao + dobra * 1.3);\n"
+    "    } else if (h < 0.82) {\n"
+    "        if (!ehPele) cor = vec3(0.24, 0.15, 0.09) + vec3(grao);\n"
+    "    }\n"
+    "    gl_FragColor = vec4(cor * vec3(0.75, 0.77, 0.84), texel.a);\n"
+    "}\n";
 Model modQuarteirao;
 bool quarteiraoPronto = false;
 Model modLuaOlho;
@@ -73,6 +123,32 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             if (std::strstr(nm, "Idle") != nullptr || std::strstr(nm, "idle") != nullptr) idxIdle = i;
         }
 
+        shaderHarry = LoadShaderFromMemory(vsHarry, fsHarry);
+        locAltMaxHarry = GetShaderLocation(shaderHarry, "altMax");
+        for (int m = 0; m < modHarry.meshCount; m++) {
+            Mesh &ms = modHarry.meshes[m];
+            if (ms.vertices != nullptr && alt > 0.001f) {
+                for (int v = 0; v < ms.vertexCount; v++) {
+                    float vx = ms.vertices[v*3 + 0];
+                    float vy = ms.vertices[v*3 + 1];
+                    float vz = ms.vertices[v*3 + 2];
+                    float hN = (vy - bb.min.y) / alt;
+                    if (hN >= 0.06f && hN < 0.43f) {
+                        float cx = (vx < 0.0f) ? (bb.min.x * 0.42f) : (bb.max.x * 0.42f);
+                        ms.vertices[v*3 + 0] = cx + (vx - cx) * 1.32f;
+                        ms.vertices[v*3 + 2] = vz * 1.32f;
+                    } else if (hN >= 0.50f && hN < 0.81f) {
+                        ms.vertices[v*3 + 0] = vx * 1.12f;
+                        ms.vertices[v*3 + 2] = vz * 1.14f;
+                    }
+                }
+                if (ms.vboId != nullptr) UpdateMeshBuffer(ms, 0, ms.vertices, ms.vertexCount * 3 * sizeof(float), 0);
+            }
+        }
+        for (int i = 0; i < modHarry.materialCount; i++) {
+            modHarry.materials[i].shader = shaderHarry;
+        }
+
         modLanternaPSX = LoadModel("lanterna_psx.glb");
         BoundingBox bbL = GetModelBoundingBox(modLanternaPSX);
         float tamL = std::max({bbL.max.x - bbL.min.x, bbL.max.y - bbL.min.y, bbL.max.z - bbL.min.z});
@@ -93,6 +169,8 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
     }
 
     float escalaY = agachado ? (escalaHarry * 0.72f) : escalaHarry;
+    float altAtual = agachado ? (1.75f * 0.72f) : 1.75f;
+    if (locAltMaxHarry != -1) SetShaderValue(shaderHarry, locAltMaxHarry, &altAtual, SHADER_UNIFORM_FLOAT);
 
     rlPushMatrix();
         rlTranslatef(pos.x, pos.y, pos.z);
@@ -105,18 +183,16 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             { 0.0f, 1.0f, 0.0f },
             0.0f,
             { escalaHarry, escalaY, escalaHarry },
-            Color{ 165, 170, 185, 255 }
+            WHITE
         );
 
-        float altMao = agachado ? 0.64f : 0.88f;
-        DrawModelEx(
-            modLanternaPSX,
-            { 0.24f, altMao, 0.14f },
-            { 0.0f, 1.0f, 0.0f },
-            0.0f,
-            { escalaLanternaPSX, escalaLanternaPSX, escalaLanternaPSX },
-            Color{ 200, 200, 200, 255 }
-        );
+        float balanco = andando ? (std::sin(timerAnimHarry * 0.22f) * 0.035f) : 0.0f;
+        float altMao = (agachado ? 0.60f : 0.82f) + balanco;
+        float xMao = -0.26f;
+        DrawCylinderEx({ xMao, altMao, -0.06f }, { xMao, altMao - 0.02f, 0.18f }, 0.038f, 0.038f, 8, Color{ 40, 44, 50, 255 });
+        DrawCylinderEx({ xMao, altMao - 0.02f, 0.18f }, { xMao, altMao - 0.03f, 0.26f }, 0.042f, 0.070f, 8, Color{ 165, 170, 180, 255 });
+        DrawSphereEx({ xMao, altMao - 0.03f, 0.265f }, 0.056f, 6, 6, Color{ 255, 248, 190, 255 });
+        DrawCylinderEx({ xMao, altMao - 0.03f, 0.27f }, { xMao, altMao - 0.09f, 0.72f }, 0.055f, 0.22f, 8, Color{ 255, 245, 185, 50 });
     rlPopMatrix();
 }
 
@@ -263,9 +339,12 @@ void desenharLuaOlho(Vector3 posJogador) {
 
     rlPushMatrix();
         rlTranslatef(posLua.x, posLua.y, posLua.z);
-        float giroOlho = olharX + std::sin((float)GetTime() * 1.5f) * 12.0f;
-        rlRotatef(15.0f, 1.0f, 0.0f, 0.0f);
-        rlRotatef(giroOlho, 0.0f, 1.0f, 0.0f);
+        float dxLua = posJogador.x - posLua.x;
+        float dzLua = posJogador.z - posLua.z;
+        float yawOlho = 180.0f + std::atan2(dxLua, dzLua) * RAD2DEG + std::sin((float)GetTime() * 2.2f) * 4.0f;
+        float pitchOlho = -16.0f + std::cos((float)GetTime() * 1.7f) * 2.5f;
+        rlRotatef(yawOlho, 0.0f, 1.0f, 0.0f);
+        rlRotatef(pitchOlho, 1.0f, 0.0f, 0.0f);
         DrawModelEx(
             modLuaOlho,
             { 0.0f, 0.0f, 0.0f },
@@ -529,7 +608,7 @@ int main() {
         camera.position = alvoCam;
         camera.target = { posHeroi.x + (dirX * 3.5f) + (rightX * 0.30f), altOlhos - 0.12f, posHeroi.z + (dirZ * 3.5f) + (rightZ * 0.30f) };
 
-        float posLuz[3] = { posHeroi.x - (rightX * 0.15f) + (dirX * 0.22f), altOlhos - 0.32f, posHeroi.z - (rightZ * 0.15f) + (dirZ * 0.22f) };
+        float posLuz[3] = { posHeroi.x + (rightX * 0.26f) + (dirX * 0.25f), altOlhos - 0.45f, posHeroi.z + (rightZ * 0.26f) + (dirZ * 0.25f) };
         float dirLuz[3] = { dirX, -0.16f, dirZ };
         SetShaderValue(shaderConsole, locLightPos, posLuz, SHADER_UNIFORM_VEC3);
         SetShaderValue(shaderConsole, locLightDir, dirLuz, SHADER_UNIFORM_VEC3);
