@@ -45,62 +45,54 @@ const char* vsHarry =
     "attribute vec2 vertexTexCoord;\n"
     "attribute vec4 vertexColor;\n"
     "uniform mat4 mvp;\n"
-    "uniform mat4 matModel;\n"
-    "varying vec3 fragPos;\n"
-    "varying vec2 fragTexCoord;\n"
-    "varying vec4 fragColor;\n"
+    "varying vec3 localPos;\n"
     "void main() {\n"
-    "    fragPos = vec3(matModel * vec4(vertexPosition, 1.0));\n"
-    "    fragTexCoord = vertexTexCoord;\n"
-    "    fragColor = vertexColor;\n"
+    "    localPos = vertexPosition;\n"
     "    gl_Position = mvp * vec4(vertexPosition, 1.0);\n"
     "}\n";
 
 const char* fsHarry =
     "#version 100\n"
     "precision mediump float;\n"
-    "varying vec3 fragPos;\n"
-    "varying vec2 fragTexCoord;\n"
-    "varying vec4 fragColor;\n"
-    "uniform sampler2D texture0;\n"
-    "uniform float altMax;\n"
+    "varying vec3 localPos;\n"
+    "uniform float minY;\n"
+    "uniform float altRaw;\n"
+    "uniform float maxX;\n"
     "void main() {\n"
-    "    vec4 texel = texture2D(texture0, fragTexCoord) * fragColor;\n"
-    "    float h = clamp(fragPos.y / altMax, 0.0, 1.0);\n"
-    "    bool ehPele = (texel.r > 0.36 && texel.r > texel.b * 1.25 && texel.g > texel.b * 1.05);\n"
-    "    float grao = fract(sin(dot(floor(fragPos.xy * 42.0), vec2(12.9898, 78.233))) * 43758.5453) * 0.05 - 0.025;\n"
-    "    float dobra = sin(fragPos.x * 16.0) * 0.025 + cos(fragPos.y * 20.0) * 0.02;\n"
-    "    vec3 cor = texel.rgb;\n"
-    "    if (h < 0.095) {\n"
-    "        cor = vec3(0.12, 0.08, 0.06) + vec3(grao * 0.5);\n"
-    "    } else if (h < 0.42) {\n"
-    "        cor = vec3(0.22, 0.28, 0.38) + vec3(grao + dobra);\n"
-    "    } else if (h < 0.495) {\n"
-    "        if (!ehPele) cor = vec3(0.21, 0.27, 0.37) + vec3(grao + dobra);\n"
-    "    } else if (h < 0.525) {\n"
-    "        if (!ehPele) cor = vec3(0.11, 0.08, 0.05);\n"
-    "    } else if (h < 0.785) {\n"
-    "        if (!ehPele) cor = vec3(0.42, 0.25, 0.14) + vec3(grao + dobra * 1.3);\n"
-    "    } else if (h < 0.82) {\n"
-    "        if (!ehPele) cor = vec3(0.24, 0.15, 0.09) + vec3(grao);\n"
+    "    float h = clamp((localPos.y - minY) / altRaw, 0.0, 1.0);\n"
+    "    float xNorm = abs(localPos.x) / max(maxX, 0.001);\n"
+    "    float grao = fract(sin(dot(floor(localPos.xy * 60.0), vec2(12.9898, 78.233))) * 43758.5453) * 0.04 - 0.02;\n"
+    "    float dobra = sin(localPos.x * 20.0) * 0.02 + cos(localPos.y * 24.0) * 0.02;\n"
+    "    vec3 cor;\n"
+    "    if (h < 0.09) {\n"
+    "        cor = vec3(0.10, 0.07, 0.05) + vec3(grao * 0.5);\n"
+    "    } else if (h < 0.485) {\n"
+    "        if (h > 0.39 && xNorm > 0.52) {\n"
+    "            cor = vec3(0.76, 0.56, 0.42) + vec3(grao * 0.4);\n"
+    "        } else {\n"
+    "            cor = vec3(0.18, 0.24, 0.35) + vec3(grao + dobra);\n"
+    "        }\n"
+    "    } else if (h < 0.515) {\n"
+    "        if (xNorm > 0.52) cor = vec3(0.76, 0.56, 0.42);\n"
+    "        else cor = vec3(0.11, 0.07, 0.04);\n"
+    "    } else if (h < 0.795) {\n"
+    "        if (h < 0.56 && xNorm > 0.55) {\n"
+    "            cor = vec3(0.76, 0.56, 0.42) + vec3(grao * 0.4);\n"
+    "        } else {\n"
+    "            cor = vec3(0.38, 0.22, 0.12) + vec3(grao + dobra * 1.4);\n"
+    "        }\n"
+    "    } else if (h < 0.825) {\n"
+    "        cor = vec3(0.22, 0.13, 0.07) + vec3(grao);\n"
+    "    } else if (h < 0.885) {\n"
+    "        cor = vec3(0.76, 0.56, 0.42) + vec3(grao * 0.4);\n"
+    "    } else {\n"
+    "        if (localPos.z > 0.02 && h < 0.945) cor = vec3(0.76, 0.56, 0.42);\n"
+    "        else cor = vec3(0.14, 0.09, 0.06) + vec3(grao * 0.6);\n"
     "    }\n"
-    "    gl_FragColor = vec4(cor * vec3(0.75, 0.77, 0.84), texel.a);\n"
+    "    float sombraCostas = 0.85 + 0.15 * sin(localPos.x * 8.0);\n"
+    "    gl_FragColor = vec4(cor * vec3(0.78, 0.80, 0.86) * sombraCostas, 1.0);\n"
     "}\n";
-Model modQuarteirao;
-bool quarteiraoPronto = false;
-Model modLuaOlho;
-Texture2D texLuaOlho;
-float escalaLuaOlho = 1.0f;
-bool luaOlhoPronta = false;
-Model modHarry, modLanternaPSX;
-float escalaHarry = 1.0f, offsetHarryY = 0.0f, offsetHarryX = 0.0f, offsetHarryZ = 0.0f;
-float escalaLanternaPSX = 1.0f;
-bool harryPronto = false;
-ModelAnimation *animsHarry = nullptr;
-int animCountHarry = 0;
-int animFrameHarry = 0;
-int idxWalk = 0, idxIdle = 0;
-float timerAnimHarry = 0.0f;
+
 Model modPoste, modLanterna;
 float escalaPoste = 1.0f, escalaLanterna = 1.0f;
 bool modelosExtrasProntos = false;
@@ -110,6 +102,7 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
         modHarry = LoadModel("personagem.gltf");
         BoundingBox bb = GetModelBoundingBox(modHarry);
         float alt = bb.max.y - bb.min.y;
+        float largMaxX = std::max(std::abs(bb.min.x), std::abs(bb.max.x));
         if (alt > 0.001f) {
             escalaHarry = 1.75f / alt;
             offsetHarryY = -bb.min.y * escalaHarry;
@@ -124,35 +117,16 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
         }
 
         shaderHarry = LoadShaderFromMemory(vsHarry, fsHarry);
-        locAltMaxHarry = GetShaderLocation(shaderHarry, "altMax");
-        for (int m = 0; m < modHarry.meshCount; m++) {
-            Mesh &ms = modHarry.meshes[m];
-            if (ms.vertices != nullptr && alt > 0.001f) {
-                for (int v = 0; v < ms.vertexCount; v++) {
-                    float vx = ms.vertices[v*3 + 0];
-                    float vy = ms.vertices[v*3 + 1];
-                    float vz = ms.vertices[v*3 + 2];
-                    float hN = (vy - bb.min.y) / alt;
-                    if (hN >= 0.06f && hN < 0.43f) {
-                        float cx = (vx < 0.0f) ? (bb.min.x * 0.42f) : (bb.max.x * 0.42f);
-                        ms.vertices[v*3 + 0] = cx + (vx - cx) * 1.32f;
-                        ms.vertices[v*3 + 2] = vz * 1.32f;
-                    } else if (hN >= 0.50f && hN < 0.81f) {
-                        ms.vertices[v*3 + 0] = vx * 1.12f;
-                        ms.vertices[v*3 + 2] = vz * 1.14f;
-                    }
-                }
-                if (ms.vboId != nullptr) UpdateMeshBuffer(ms, 0, ms.vertices, ms.vertexCount * 3 * sizeof(float), 0);
-            }
-        }
+        int locMinY = GetShaderLocation(shaderHarry, "minY");
+        int locAltRaw = GetShaderLocation(shaderHarry, "altRaw");
+        int locMaxX = GetShaderLocation(shaderHarry, "maxX");
+        SetShaderValue(shaderHarry, locMinY, &bb.min.y, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(shaderHarry, locAltRaw, &alt, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(shaderHarry, locMaxX, &largMaxX, SHADER_UNIFORM_FLOAT);
+
         for (int i = 0; i < modHarry.materialCount; i++) {
             modHarry.materials[i].shader = shaderHarry;
         }
-
-        modLanternaPSX = LoadModel("lanterna_psx.glb");
-        BoundingBox bbL = GetModelBoundingBox(modLanternaPSX);
-        float tamL = std::max({bbL.max.x - bbL.min.x, bbL.max.y - bbL.min.y, bbL.max.z - bbL.min.z});
-        if (tamL > 0.001f) escalaLanternaPSX = 0.28f / tamL;
 
         harryPronto = true;
     }
@@ -169,8 +143,6 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
     }
 
     float escalaY = agachado ? (escalaHarry * 0.72f) : escalaHarry;
-    float altAtual = agachado ? (1.75f * 0.72f) : 1.75f;
-    if (locAltMaxHarry != -1) SetShaderValue(shaderHarry, locAltMaxHarry, &altAtual, SHADER_UNIFORM_FLOAT);
 
     rlPushMatrix();
         rlTranslatef(pos.x, pos.y, pos.z);
@@ -182,17 +154,16 @@ void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachad
             { offsetHarryX, offsetHarryY, offsetHarryZ },
             { 0.0f, 1.0f, 0.0f },
             0.0f,
-            { escalaHarry, escalaY, escalaHarry },
+            { escalaHarry * 1.08f, escalaY, escalaHarry * 1.08f },
             WHITE
         );
 
         float balanco = andando ? (std::sin(timerAnimHarry * 0.22f) * 0.035f) : 0.0f;
         float altMao = (agachado ? 0.60f : 0.82f) + balanco;
-        float xMao = -0.26f;
-        DrawCylinderEx({ xMao, altMao, -0.06f }, { xMao, altMao - 0.02f, 0.18f }, 0.038f, 0.038f, 8, Color{ 40, 44, 50, 255 });
-        DrawCylinderEx({ xMao, altMao - 0.02f, 0.18f }, { xMao, altMao - 0.03f, 0.26f }, 0.042f, 0.070f, 8, Color{ 165, 170, 180, 255 });
-        DrawSphereEx({ xMao, altMao - 0.03f, 0.265f }, 0.056f, 6, 6, Color{ 255, 248, 190, 255 });
-        DrawCylinderEx({ xMao, altMao - 0.03f, 0.27f }, { xMao, altMao - 0.09f, 0.72f }, 0.055f, 0.22f, 8, Color{ 255, 245, 185, 50 });
+        float xMao = -0.25f;
+        DrawCylinderEx({ xMao, altMao, -0.05f }, { xMao, altMao - 0.02f, 0.16f }, 0.032f, 0.032f, 8, Color{ 35, 38, 44, 255 });
+        DrawCylinderEx({ xMao, altMao - 0.02f, 0.16f }, { xMao, altMao - 0.03f, 0.23f }, 0.036f, 0.058f, 8, Color{ 160, 165, 175, 255 });
+        DrawSphereEx({ xMao, altMao - 0.03f, 0.235f }, 0.046f, 6, 6, Color{ 255, 248, 195, 255 });
     rlPopMatrix();
 }
 
@@ -373,7 +344,7 @@ void desenharRuaSilentHill() {
                 ImageDrawPixel(&i1, px, py, c);
             }
         }
-        modAsfalto = LoadModelFromMesh(GenMeshPlane(12.0f, 80.0f, 12, 80));
+        modAsfalto = LoadModelFromMesh(GenMeshPlane(16.0f, 80.0f, 32, 80));
         Texture2D texAsf = LoadTextureFromImage(i1);
         SetTextureFilter(texAsf, TEXTURE_FILTER_POINT);
         modAsfalto.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texAsf;
@@ -475,26 +446,38 @@ int main() {
             bool clicou = (tocandoAgora && !tocouAntes) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
             tocouAntes = tocandoAgora;
 
-            DrawRectangleLinesEx(Rectangle{ 24, 24, sw - 48, sh - 48 }, 3, Color{ 50, 200, 120, 200 });
+            DrawRectangleLinesEx(Rectangle{ 24, 24, sw - 48, sh - 48 }, 4, Color{ 50, 200, 120, 200 });
             const char* titulo = "SHADOW PROTOCOL 3D";
-            DrawText(titulo, (int)(sw/2 - MeasureText(titulo, 44)/2), 55, 44, Color{ 90, 245, 160, 255 });
+            int tamTitulo = 68;
+            DrawText(titulo, (int)(sw/2 - MeasureText(titulo, tamTitulo)/2), 55, tamTitulo, Color{ 90, 245, 160, 255 });
 
             if (estadoAtual == TELA_LAUNCHER) {
-                Rectangle rJogar = { sw/2 - 210, sh/2 - 75, 420, 80 };
-                Rectangle rOpcoes = { sw/2 - 210, sh/2 + 25, 420, 80 };
+                float largBtn = 760.0f, altBtn = 145.0f;
+                Rectangle rJogar = { sw/2 - largBtn/2, sh/2 - 155.0f, largBtn, altBtn };
+                Rectangle rOpcoes = { sw/2 - largBtn/2, sh/2 + 30.0f, largBtn, altBtn };
                 DrawRectangleRounded(rJogar, 0.25f, 10, Color{ 32, 145, 85, 255 });
-                DrawRectangleRoundedLinesEx(rJogar, 0.25f, 10, 3, WHITE);
-                DrawText("JOGAR", (int)(rJogar.x + 210 - MeasureText("JOGAR", 34)/2), (int)(rJogar.y + 23), 34, WHITE);
+                DrawRectangleRoundedLinesEx(rJogar, 0.25f, 10, 4, WHITE);
+                DrawText("JOGAR", (int)(rJogar.x + largBtn/2 - MeasureText("JOGAR", 56)/2), (int)(rJogar.y + (altBtn - 56)/2), 56, WHITE);
+
                 DrawRectangleRounded(rOpcoes, 0.25f, 10, Color{ 36, 48, 60, 255 });
-                DrawRectangleRoundedLinesEx(rOpcoes, 0.25f, 10, 3, Color{ 130, 210, 175, 255 });
-                DrawText("OPCOES", (int)(rOpcoes.x + 210 - MeasureText("OPCOES", 34)/2), (int)(rOpcoes.y + 23), 34, WHITE);
+                DrawRectangleRoundedLinesEx(rOpcoes, 0.25f, 10, 4, Color{ 130, 210, 175, 255 });
+                DrawText("OPCOES", (int)(rOpcoes.x + largBtn/2 - MeasureText("OPCOES", 56)/2), (int)(rOpcoes.y + (altBtn - 56)/2), 56, WHITE);
+
                 if (clicou && CheckCollisionPointRec(toque, rJogar)) estadoAtual = TELA_JOGANDO;
                 if (clicou && CheckCollisionPointRec(toque, rOpcoes)) estadoAtual = TELA_OPCOES;
             }
             else {
-                float bw = 580.0f, bh = 58.0f, bx = sw/2 - bw/2;
-                Rectangle botoes[] = { {bx,125,bw,bh}, {bx,193,bw,bh}, {bx,261,bw,bh}, {bx,329,bw,bh}, {bx,397,bw,bh} };
-                Rectangle rVoltar = { sw/2 - 190, sh - 102, 380, 64 };
+                float bw = 1120.0f, bh = 104.0f, bx = sw/2 - bw/2;
+                float startY = 165.0f, espacoY = 122.0f;
+                Rectangle botoes[] = {
+                    {bx, startY + espacoY*0, bw, bh},
+                    {bx, startY + espacoY*1, bw, bh},
+                    {bx, startY + espacoY*2, bw, bh},
+                    {bx, startY + espacoY*3, bw, bh},
+                    {bx, startY + espacoY*4, bw, bh}
+                };
+                float largVoltar = 680.0f, altVoltar = 115.0f;
+                Rectangle rVoltar = { sw/2 - largVoltar/2, sh - 155.0f, largVoltar, altVoltar };
                 char txtRes[64];
                 const char* nomeRes[] = { "100% (NATIVA)", "75% (ALTA)", "50% (720P PS2)" };
                 std::sprintf(txtRes, "RESOLUCAO 3D: %s (%dx%d)", nomeRes[optNivelRes], resW, resH);
@@ -506,13 +489,14 @@ int main() {
                     txtRes
                 };
                 for (int i = 0; i < 5; i++) {
-                    DrawRectangleRounded(botoes[i], 0.22f, 8, Color{ 30, 42, 52, 255 });
-                    DrawRectangleRoundedLinesEx(botoes[i], 0.22f, 8, 2, Color{ 95, 165, 140, 220 });
-                    int fs = (i == 4) ? 23 : 25;
+                    DrawRectangleRounded(botoes[i], 0.25f, 8, Color{ 30, 42, 52, 255 });
+                    DrawRectangleRoundedLinesEx(botoes[i], 0.25f, 8, 3, Color{ 95, 165, 140, 220 });
+                    int fs = (i == 4) ? 38 : 42;
                     DrawText(textos[i], (int)(botoes[i].x + bw/2 - MeasureText(textos[i], fs)/2), (int)(botoes[i].y + (bh - fs)/2), fs, WHITE);
                 }
                 DrawRectangleRounded(rVoltar, 0.25f, 10, Color{ 32, 145, 85, 255 });
-                DrawText("SALVAR E VOLTAR", (int)(rVoltar.x + 190 - MeasureText("SALVAR E VOLTAR", 26)/2), (int)(rVoltar.y + 19), 26, WHITE);
+                DrawRectangleRoundedLinesEx(rVoltar, 0.25f, 10, 3, WHITE);
+                DrawText("SALVAR E VOLTAR", (int)(rVoltar.x + largVoltar/2 - MeasureText("SALVAR E VOLTAR", 44)/2), (int)(rVoltar.y + (altVoltar - 44)/2), 44, WHITE);
                 if (clicou) {
                     bool mudou = false;
                     if (CheckCollisionPointRec(toque, botoes[0])) { optLanterna = !optLanterna; mudou = true; }
@@ -535,7 +519,7 @@ int main() {
             continue;
         }
 
-        Rectangle btnMenuHud = { sw - 290.0f, 24.0f, 150.0f, 46.0f };
+        Rectangle btnMenuHud = { sw - 340.0f, 28.0f, 230.0f, 78.0f };
         Vector2 baseAnalogico = { 230.0f, sh - 205.0f };
         float raioBase = 128.0f, eixoX = 0.0f, eixoY = 0.0f;
         Vector2 pinoAnalogico = baseAnalogico;
@@ -648,7 +632,7 @@ int main() {
         btnXbox(posBtnY, "Y", Color{ 230, 180, 35, 255 }, btnYPress);
 
         DrawRectangleRounded(btnMenuHud, 0.25f, 8, Color{ 35, 45, 55, 225 });
-        DrawText("MENU", (int)(btnMenuHud.x + 75 - MeasureText("MENU", 22)/2), (int)(btnMenuHud.y + 12), 22, WHITE);
+        DrawText("MENU", (int)(btnMenuHud.x + 115 - MeasureText("MENU", 36)/2), (int)(btnMenuHud.y + 21), 36, WHITE);
         if (optMostrarFps) DrawFPS(30, 25);
         EndDrawing();
     }
