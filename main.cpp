@@ -378,10 +378,40 @@ void desenharRuaSilentHill() {
         modCalcada.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texCalc;
         modCalcada.materials[0].shader = shaderConsole;
         UnloadImage(i2);
+        Image imgPred = GenImageColor(128, 128, Color{ 68, 64, 62, 255 });
+        for (int py = 0; py < 128; py++) {
+            for (int px = 0; px < 128; px++) {
+                int ruido = ((px * 37 + py * 91) % 15) - 7;
+                Color c = Color{
+                    (unsigned char)std::clamp(68 + ruido, 20, 255),
+                    (unsigned char)std::clamp(64 + ruido, 20, 255),
+                    (unsigned char)std::clamp(62 + ruido, 20, 255),
+                    255
+                };
+                if (py % 8 == 0 || ((px + (py / 8) * 8) % 16 == 0)) {
+                    c.r = (unsigned char)(c.r * 0.78f);
+                    c.g = (unsigned char)(c.g * 0.78f);
+                    c.b = (unsigned char)(c.b * 0.78f);
+                }
+                int gx = px % 32, gy = py % 32;
+                if (py < 96 && gx >= 7 && gx <= 24 && gy >= 6 && gy <= 24) {
+                    if (gx == 7 || gx == 24 || gy == 6 || gy == 24 || gx == 15 || gy == 15) {
+                        c = Color{ 28, 30, 34, 255 };
+                    } else {
+                        int idJan = (px / 32) + (py / 32) * 7;
+                        if (idJan % 5 == 0) c = Color{ 195, 165, 95, 255 };
+                        else if (idJan % 7 == 0) c = Color{ 115, 135, 150, 255 };
+                        else c = Color{ 18, 22, 30, 255 };
+                    }
+                }
+                ImageDrawPixel(&imgPred, px, py, c);
+            }
+        }
         modPredio = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
-        Texture2D texParede = LoadTexture("parede.png");
-        SetTextureWrap(texParede, TEXTURE_WRAP_REPEAT);
-        modPredio.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texParede;
+        Texture2D texPred = LoadTextureFromImage(imgPred);
+        SetTextureFilter(texPred, TEXTURE_FILTER_POINT);
+        UnloadImage(imgPred);
+        modPredio.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texPred;
         modPredio.materials[0].shader = shaderConsole;
         modelosRuaProntos = true;
     }
@@ -397,7 +427,55 @@ void desenharRuaSilentHill() {
     DrawCube(Vector3{ -18.0f, 0.05f, 0.0f }, 16.0f, 0.10f, 80.0f, Color{ 14, 16, 18, 255 });
     DrawCube(Vector3{  18.0f, 0.05f, 0.0f }, 16.0f, 0.10f, 80.0f, Color{ 14, 16, 18, 255 });
 
-    // Estruturas removidas
+    // Quarteirao PS1: Predios, marquises de lojas, vitrines e postes de rua
+    float zBlocos[5] = { -30.0f, -15.0f, 0.0f, 15.0f, 30.0f };
+    float altEsq[5]  = { 12.0f, 9.5f, 14.5f, 10.5f, 13.0f };
+    float altDir[5]  = { 10.5f, 14.0f, 9.5f, 13.5f, 11.0f };
+    Color tintPred[5] = {
+        Color{ 175, 155, 145, 255 },
+        Color{ 145, 155, 168, 255 },
+        Color{ 165, 160, 142, 255 },
+        Color{ 138, 142, 152, 255 },
+        Color{ 170, 145, 140, 255 }
+    };
+    Color corToldo[5] = {
+        Color{ 145, 42, 42, 255 },
+        Color{ 38, 95, 68, 255 },
+        Color{ 48, 72, 125, 255 },
+        Color{ 135, 95, 38, 255 },
+        Color{ 95, 45, 105, 255 }
+    };
+
+    for (int i = 0; i < 5; i++) {
+        float zb = zBlocos[i];
+        // Predio Esquerdo e Direito
+        DrawModelEx(modPredio, { -14.0f, altEsq[i] * 0.5f, zb }, { 0.0f, 1.0f, 0.0f }, 0.0f, { 7.2f, altEsq[i], 12.2f }, tintPred[i]);
+        DrawModelEx(modPredio, {  14.0f, altDir[i] * 0.5f, zb }, { 0.0f, 1.0f, 0.0f }, 0.0f, { 7.2f, altDir[i], 12.2f }, tintPred[(i + 2) % 5]);
+
+        // Marquises / Toldos das lojas
+        DrawModelEx(modPredio, { -10.0f, 3.1f, zb }, { 0.0f, 1.0f, 0.0f }, 0.0f, { 1.4f, 0.28f, 10.6f }, corToldo[i]);
+        DrawModelEx(modPredio, {  10.0f, 3.1f, zb }, { 0.0f, 1.0f, 0.0f }, 0.0f, { 1.4f, 0.28f, 10.6f }, corToldo[(i + 1) % 5]);
+
+        // Vitrines e portas no terreo
+        Color corVitEsq = (i % 2 == 0) ? Color{ 185, 170, 120, 255 } : Color{ 55, 70, 85, 255 };
+        Color corVitDir = (i % 2 == 1) ? Color{ 185, 170, 120, 255 } : Color{ 55, 70, 85, 255 };
+        DrawModelEx(modPredio, { -10.36f, 1.55f, zb - 2.4f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { 0.18f, 2.0f, 3.8f }, corVitEsq);
+        DrawModelEx(modPredio, { -10.36f, 1.25f, zb + 2.2f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { 0.20f, 2.3f, 1.5f }, Color{ 45, 30, 22, 255 });
+        DrawModelEx(modPredio, {  10.36f, 1.55f, zb + 2.4f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { 0.18f, 2.0f, 3.8f }, corVitDir);
+        DrawModelEx(modPredio, {  10.36f, 1.25f, zb - 2.2f }, { 0.0f, 1.0f, 0.0f }, 0.0f, { 0.20f, 2.3f, 1.5f }, Color{ 45, 30, 22, 255 });
+    }
+
+    // Postes de iluminacao publica nas calcadas
+    for (float zp = -33.0f; zp <= 33.0f; zp += 13.2f) {
+        for (int lado = -1; lado <= 1; lado += 2) {
+            float xp = lado * 6.35f;
+            float braX = xp - lado * 0.65f;
+            DrawCylinder({ xp, 0.24f, zp }, 0.09f, 0.12f, 4.5f, 6, Color{ 38, 42, 48, 255 });
+            DrawCylinderEx({ xp, 4.65f, zp }, { braX, 4.75f, zp }, 0.06f, 0.05f, 6, Color{ 38, 42, 48, 255 });
+            DrawSphereEx({ braX, 4.68f, zp }, 0.15f, 6, 6, Color{ 255, 235, 175, 255 });
+            DrawCylinder({ xp - lado * 0.45f, 0.25f, zp }, 1.6f, 1.6f, 0.015f, 10, Color{ 255, 220, 140, 32 });
+        }
+    }
     desenharCarroAbandonado(-2.8f, -14.0f,  14.0f, Color{ 82, 46, 42, 255 });
     desenharCarroAbandonado( 2.9f,   7.5f, -165.0f, Color{ 52, 64, 72, 255 });
     desenharCarroAbandonado(-2.4f,  23.0f,  -8.0f, Color{ 76, 74, 62, 255 });
@@ -583,7 +661,7 @@ int main() {
             bool bateuCarro = (std::hypot(nx - (-2.8f), nz - (-14.0f)) < 1.8f) ||
                               (std::hypot(nx - ( 2.9f), nz - (  7.5f)) < 1.8f) ||
                               (std::hypot(nx - (-2.4f), nz - ( 23.0f)) < 1.8f);
-            if (!bateuCarro && nx > -13.2f && nx < 13.2f) posHeroi.x = nx;
+            if (!bateuCarro && nx > -10.0f && nx < 10.0f) posHeroi.x = nx;
             if (!bateuCarro && nz > -38.5f && nz < 38.5f) posHeroi.z = nz;
             if (std::abs(posHeroi.x) > 10.4f) posHeroi.y = 0.10f;
             else if (std::abs(posHeroi.x) > 6.0f) posHeroi.y = 0.24f;
@@ -598,7 +676,7 @@ int main() {
         float rightX = -dirZ, rightZ = dirX;
         float altOlhos = posHeroi.y + (agachado ? 1.15f : 1.52f);
         Vector3 alvoCam = { posHeroi.x - (dirX * 2.45f) + (rightX * 0.58f), altOlhos + 0.12f, posHeroi.z - (dirZ * 2.45f) + (rightZ * 0.58f) };
-        if (alvoCam.x < -12.8f) alvoCam.x = -12.8f; if (alvoCam.x > 12.8f) alvoCam.x = 12.8f;
+        if (alvoCam.x < -9.8f) alvoCam.x = -9.8f; if (alvoCam.x > 9.8f) alvoCam.x = 9.8f;
         if (alvoCam.z < -38.5f) alvoCam.z = -38.5f; if (alvoCam.z > 38.5f) alvoCam.z = 38.5f;
         camera.position = alvoCam;
         camera.target = { posHeroi.x + (dirX * 3.5f) + (rightX * 0.30f), altOlhos - 0.12f, posHeroi.z + (dirZ * 3.5f) + (rightZ * 0.30f) };
