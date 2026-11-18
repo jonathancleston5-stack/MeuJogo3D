@@ -97,6 +97,22 @@ Model modPoste, modLanterna;
 float escalaPoste = 1.0f, escalaLanterna = 1.0f;
 bool modelosExtrasProntos = false;
 
+Model modQuarteirao;
+bool quarteiraoPronto = false;
+Model modLuaOlho;
+Texture2D texLuaOlho;
+float escalaLuaOlho = 1.0f;
+bool luaOlhoPronta = false;
+Model modHarry, modLanternaPSX;
+float escalaHarry = 1.0f, offsetHarryY = 0.0f, offsetHarryX = 0.0f, offsetHarryZ = 0.0f;
+float escalaLanternaPSX = 1.0f;
+bool harryPronto = false;
+ModelAnimation *animsHarry = nullptr;
+int animCountHarry = 0;
+int animFrameHarry = 0;
+int idxWalk = 0, idxIdle = 0;
+float timerAnimHarry = 0.0f;
+
 void desenharBonecoPS1(Vector3 pos, float angulo, float cicloPasso, bool agachado) {
     if (!harryPronto) {
         modHarry = LoadModel("personagem.gltf");
